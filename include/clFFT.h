@@ -4,8 +4,13 @@
 #ifdef __cplusplus 
 extern "C" { 
 #endif 
-  
-#include <CL/cl.h> 
+
+#ifdef __APPLE__  
+	#include <OpenCL/cl.h> 
+#else
+	#include <CL/cl.h> 
+#endif
+
 #include <stdio.h> 
   
 // XForm type 
@@ -15,7 +20,7 @@ typedef enum
     clFFT_Inverse   =    1 
      
 }clFFT_Direction; 
-  
+
 // XForm dimension 
 typedef enum 
 { 

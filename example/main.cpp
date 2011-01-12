@@ -2,8 +2,12 @@
 #include <math.h> 
 #include <stdio.h> 
 #include <stdlib.h> 
-#include <CL/cl.h> 
-#include "clFFT.h" 
+#ifdef __APPLE__  
+	#include <OpenCL/cl.h> 
+#else
+	#include <CL/cl.h> 
+#endif 
+#include <clFFT.h> 
 #include <sys/types.h> 
 #include <sys/stat.h> 
 #include <stdint.h> 
@@ -120,7 +124,7 @@ int runTest(clFFT_Dim3 n, int batchSize, clFFT_Direction dir, clFFT_Dimension di
     else { 
 
 // ADDED
-FILE* f = fopen ("waveform", "r");
+FILE* f = fopen ("test_waveform.dat", "r");
         for(i = 0; i < length; i++) 
         { 
 // ADDED

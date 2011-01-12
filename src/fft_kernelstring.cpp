@@ -6,7 +6,7 @@
 #include <string.h> 
 #include <assert.h> 
 #include "fft_internal.h" 
-#include "clFFT.h" 
+#include <clFFT.h> 
   
 using namespace std; 
   

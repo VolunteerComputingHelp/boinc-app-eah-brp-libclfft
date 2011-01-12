@@ -1,0 +1,6 @@
+# patterns
+*.o
+*.a
+
+# files
+clfft_example
