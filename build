@@ -1,0 +1,7 @@
+#! /bin/csh -f
+
+set NV = ~/NVIDIA_GPU_Computing_SDK
+
+g++ -g -o fft -I$NV/OpenCL/common/inc\
+    main.cpp fft_setup.cpp fft_execute.cpp  fft_kernelstring.cpp\
+    -lOpenCL

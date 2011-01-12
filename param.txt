@@ -1,0 +1,1 @@
+-n 256 1 1 -batchsize 1 -dir forward -dim 1D -format interleaved -numiter 1 -testtype in-place 

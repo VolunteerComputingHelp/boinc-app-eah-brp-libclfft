@@ -1,0 +1,9 @@
+-n 64 1 1 -batchsize 8192 -dir forward -dim 1D -format plannar -numiter 1000 -testtype out-of-place 
+-n 1024 1 1 -batchsize 8192 -dir forward -dim 1D -format plannar -numiter 1000 -testtype out-of-place 
+-n 1048576 1 1 -batchsize 4 -dir inverse -dim 1D -format interleaved -numiter 1000 -testtype out-of-place 
+-n 1024 512 1 -batchsize 8 -dir forward -dim 2D -format interleaved -numiter 1000 -testtype out-of-place 
+-n 128 128 128 -batchsize 1 -dir inverse -dim 3D -format interleaved -numiter 1000 -testtype out-of-place 
+-n 16384 1 1 -batchsize 4 -dir forward -dim 1D -format interleaved -numiter 1 -testtype in-place 
+-n 32 2048 1 -batchsize 8 -dir forward -dim 2D -format interleaved -numiter 1 -testtype in-place 
+-n 4096 64 1 -batchsize 4 -dir inverse -dim 2D -format plannar -numiter 1 -testtype in-place 
+-n 64 32 16 -batchsize 1 -dir inverse -dim 3D -format interleaved -numiter 1 -testtype out-of-place 
