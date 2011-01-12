@@ -48,15 +48,8 @@ int runTest(clFFT_Dim3 n, int batchSize, clFFT_Direction dir, clFFT_Dimension di
 {    
     cl_int err = CL_SUCCESS; 
     int iter; 
-    double t; 
      
-    uint64_t t0, t1; 
-    int mx = log2(n.x); 
-    int my = log2(n.y); 
-    int mz = log2(n.z); 
-  
     int length = n.x * n.y * n.z * batchSize; 
-    double gflops = 5e-9 * ((double)mx + (double)my + (double)mz) * (double)n.x * (double)n.y * (double)n.z * (double)batchSize * (double)numIter; 
      
     clFFT_SplitComplex data_i_split = (clFFT_SplitComplex) { NULL, NULL }; 
     clFFT_SplitComplex data_cl_split = (clFFT_SplitComplex) { NULL, NULL }; 
