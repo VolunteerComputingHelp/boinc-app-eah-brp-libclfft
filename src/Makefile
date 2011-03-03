@@ -1,6 +1,8 @@
+NVIDIA_SDK_INSTALL_PATH ?= /usr/local/cuda
+
 TARGET = libclfft.a
 
-CXXFLAGS += -O3 -Wall -g -I../include
+CXXFLAGS += -O3 -Wall -g -I$(NVIDIA_SDK_INSTALL_PATH)/OpenCL/common/inc -I../include
 OS = $(shell uname -s)
 ifeq ($(OS), Darwin)
 	CXXFLAGS += -I/System/Library/Frameworks
