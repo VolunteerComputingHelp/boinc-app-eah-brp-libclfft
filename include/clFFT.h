@@ -1,15 +1,15 @@
 #ifndef __CLFFT_H 
 #define __CLFFT_H 
-  
-#ifdef __cplusplus 
-extern "C" { 
-#endif 
 
 #ifdef __APPLE__  
 	#include <OpenCL/cl.h> 
 #else
 	#include <CL/cl.h> 
 #endif
+  
+#ifdef __cplusplus 
+extern "C" { 
+#endif 
 
 #include <stdio.h> 
   
