@@ -1,15 +1,18 @@
 PWD = $(shell pwd)
 NVIDIA_SDK_INSTALL_PATH ?= /usr/local/cuda
+ATISTREAMSDKROOT ?= /usr/local/ati
 
 TARGET = clfft_example
 
-CXXFLAGS += -O3 -Wall -g -I$(NVIDIA_SDK_INSTALL_PATH)/OpenCL/common/inc -I../include
+CXXFLAGS += -O3 -Wall -g -I$(NVIDIA_SDK_INSTALL_PATH)/OpenCL/common/inc -I$(ATISTREAMSDKROOT)/include -I../include
 LDFLAGS += $(PWD)/../lib/libclfft.a
 
 OS = $(shell uname -s)
+ARCH = $(shell uname -m)
 ifeq ($(OS), Darwin)
 	LDFLAGS += -framework OpenCL
 else
+	LDFLAGS += -L$(ATISTREAMSDKROOT)/lib/$(ARCH)
 	LDFLAGS += -lOpenCL
 endif
 
