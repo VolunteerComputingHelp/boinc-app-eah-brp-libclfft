@@ -14,8 +14,8 @@ else
 endif
 
 
-$(TARGET): main.cpp
-	g++ $(CXXFLAGS) $(LDFLAGS) -o $(TARGET) main.cpp
+$(TARGET): main.cpp Makefile
+	g++ $(CXXFLAGS) main.cpp $(LDFLAGS) -o $(TARGET)
 
 clean:
 	rm -f $(TARGET)
