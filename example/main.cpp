@@ -320,7 +320,7 @@ cl_device_type getGlobalDeviceType()
 void  
 notify_callback(const char *errinfo, const void *private_info, size_t cb, void *user_data) 
 { 
-    log_error((char*) "%s\n", errinfo ); 
+    printf("ERROR: %s\n", errinfo); 
 } 
   
 int 
@@ -377,7 +377,7 @@ int main (int argc, char * const argv[]) {
         err = clGetDeviceInfo(device_ids[i], CL_DEVICE_AVAILABLE, sizeof(cl_bool), &available, NULL); 
         if(err) 
         { 
-             log_error((char*)"Cannot check device availability of device # %d\n", i); 
+             printf("ERROR: Cannot check device availability of device # %d\n", i); 
         } 
          
         if(available) 
@@ -391,11 +391,11 @@ int main (int argc, char * const argv[]) {
             err = clGetDeviceInfo(device_ids[i], CL_DEVICE_NAME, sizeof(name), name, NULL); 
             if(err == CL_SUCCESS) 
             { 
-                 log_info((char*)"Device %s not available for compute\n", name); 
+                 printf("INFO: Device %s not available for compute\n", name); 
             } 
             else 
             { 
-                 log_info((char*)"Device # %d not available for compute\n", i); 
+                 printf("INFO: Device # %d not available for compute\n", i); 
             } 
         } 
     } 
