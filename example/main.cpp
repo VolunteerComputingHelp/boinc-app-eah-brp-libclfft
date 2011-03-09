@@ -369,55 +369,75 @@ int main (int argc, char * const argv[]) {
     } 
      
     device_id = NULL; 
-     
-    unsigned int i; 
-    for(i = 0; i < num_devices; i++) 
-    { 
+    unsigned int i = 0;
+
+    if (argc == 3) {
         cl_bool available; 
-        err = clGetDeviceInfo(device_ids[i], CL_DEVICE_AVAILABLE, sizeof(cl_bool), &available, NULL); 
+        err = clGetDeviceInfo(device_ids[atoi(argv[2])], CL_DEVICE_AVAILABLE, sizeof(cl_bool), &available, NULL); 
         if(err) 
         { 
-             printf("ERROR: Cannot check device availability of device # %d\n", i); 
+            printf("ERROR: Cannot check device availability of device # %d\n", atoi(argv[2])); 
         } 
-         
-        if(available) 
-        { 
-            device_id = device_ids[i]; 
-            char name[200]; 
-            err = clGetDeviceInfo(device_ids[i], CL_DEVICE_NAME, sizeof(name), name, NULL); 
-            if(err == CL_SUCCESS) 
-            { 
-                 printf("INFO: Using device %s...\n", name); 
-            } 
-            else 
-            { 
-                 printf("INFO: Using device # %d...\n", i); 
-            } 
 
-            break; 
-        } 
-        else 
+        if(available)
+        {
+            device_id = device_ids[atoi(argv[2])];
+        }
+        else
         { 
-            char name[200]; 
-            err = clGetDeviceInfo(device_ids[i], CL_DEVICE_NAME, sizeof(name), name, NULL); 
-            if(err == CL_SUCCESS) 
+            printf("INFO: Device # %d not available for compute\n", atoi(argv[2])); 
+            return -1;
+        } 
+    }
+    else { 
+        for(i = 0; i < num_devices; i++) 
+        { 
+            cl_bool available; 
+            err = clGetDeviceInfo(device_ids[i], CL_DEVICE_AVAILABLE, sizeof(cl_bool), &available, NULL); 
+            if(err) 
             { 
-                 printf("INFO: Device %s not available for compute\n", name); 
+                printf("ERROR: Cannot check device availability of device # %d\n", i); 
+            } 
+         
+            if(available) 
+            { 
+                device_id = device_ids[i]; 
+                break; 
             } 
             else 
             { 
-                 printf("INFO: Device # %d not available for compute\n", i); 
-            } 
-        } 
+                char name[200]; 
+                err = clGetDeviceInfo(device_ids[i], CL_DEVICE_NAME, sizeof(name), name, NULL); 
+                if(err == CL_SUCCESS) 
+                { 
+                    printf("INFO: Device %s not available for compute\n", name); 
+                } 
+                else 
+                { 
+                    printf("INFO: Device # %d not available for compute\n", i); 
+                } 
+            }
+        }  
+    
+        if(!device_id) 
+        { 
+            log_error((char*)"None of the devices available for compute ... aborting test\n"); 
+            //test_finish(); 
+            return -1; 
+        }
     } 
-     
-    if(!device_id) 
+
+    char name[200]; 
+    err = clGetDeviceInfo(device_id, CL_DEVICE_NAME, sizeof(name), name, NULL); 
+    if(err == CL_SUCCESS) 
     { 
-        log_error((char*)"None of the devices available for compute ... aborting test\n"); 
-        //test_finish(); 
-        return -1; 
+        printf("INFO: Using device %s...\n", name); 
     } 
-     
+    else 
+    { 
+        printf("INFO: Using device # %d...\n", i); 
+    } 
+ 
     context = clCreateContext(0, 1, &device_id, NULL, NULL, &err); 
     if(!context || err)  
     { 
@@ -458,7 +478,7 @@ int main (int argc, char * const argv[]) {
         return -1; 
     } 
      
-    if(argc == 2) { // arguments are supplied in a file with arguments for a single run are all on the same line 
+    if(argc >= 2) { // arguments are supplied in a file with arguments for a single run are all on the same line 
         paramFile = fopen(argv[1], "r"); 
         if(!paramFile) { 
             log_error((char*)"Cannot open the parameter file\n"); 
