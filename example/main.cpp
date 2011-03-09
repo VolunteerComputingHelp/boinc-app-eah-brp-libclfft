@@ -383,6 +383,17 @@ int main (int argc, char * const argv[]) {
         if(available) 
         { 
             device_id = device_ids[i]; 
+            char name[200]; 
+            err = clGetDeviceInfo(device_ids[i], CL_DEVICE_NAME, sizeof(name), name, NULL); 
+            if(err == CL_SUCCESS) 
+            { 
+                 printf("INFO: Using device %s...\n", name); 
+            } 
+            else 
+            { 
+                 printf("INFO: Using device # %d...\n", i); 
+            } 
+
             break; 
         } 
         else 
