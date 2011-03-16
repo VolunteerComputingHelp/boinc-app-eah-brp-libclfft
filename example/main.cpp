@@ -89,8 +89,6 @@ cl_device_id     device_id;
 cl_context       context;
 cl_command_queue queue;
 
-typedef unsigned long long ulong;
-
 #ifdef __APPLE__
 double subtractTimes( uint64_t endTime, uint64_t startTime )
 {
@@ -382,16 +380,19 @@ int runTest(clFFT_Dim3 n, int batchSize, clFFT_Direction dir, clFFT_Dimension di
 {	
 	cl_int err = CL_SUCCESS;
 	int iter;
+
+#ifdef __APPLE__
 	double t;
-	
 	uint64_t t0, t1;
+
 	int mx = log2(n.x);
 	int my = log2(n.y);
 	int mz = log2(n.z);
 
-	int length = n.x * n.y * n.z * batchSize;
-		
 	double gflops = 5e-9 * ((double)mx + (double)my + (double)mz) * (double)n.x * (double)n.y * (double)n.z * (double)batchSize * (double)numIter;
+#endif
+
+	int length = n.x * n.y * n.z * batchSize;
 	
 	clFFT_SplitComplex data_i_split = (clFFT_SplitComplex) { NULL, NULL };
 	clFFT_SplitComplex data_cl_split = (clFFT_SplitComplex) { NULL, NULL };
@@ -540,8 +541,10 @@ int runTest(clFFT_Dim3 n, int batchSize, clFFT_Direction dir, clFFT_Dimension di
 		
 			
 	err = CL_SUCCESS;
-	
+
+#ifdef __APPLE__
 	t0 = mach_absolute_time();
+#endif
 	if(dataFormat == clFFT_SplitComplexFormat)
 	{
 		for(iter = 0; iter < numIter; iter++)
