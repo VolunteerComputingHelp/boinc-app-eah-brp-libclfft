@@ -18,7 +18,7 @@ else
 endif
 
 
-$(TARGET): main.cpp Makefile
+$(TARGET): main.cpp Makefile $(PWD)/../lib/libclfft.a
 	g++ $(CXXFLAGS) main.cpp $(LDFLAGS) -o $(TARGET)
 
 clean:
