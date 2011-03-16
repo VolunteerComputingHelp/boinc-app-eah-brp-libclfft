@@ -50,10 +50,14 @@
 #include <math.h>
 #include <stdio.h>
 #include <stdlib.h>
-#include <OpenCL/opencl.h>
-#include "clFFT.h"
-#include <mach/mach_time.h>
-#include <Accelerate/Accelerate.h>
+#ifdef __APPLE__
+    #include <OpenCL/cl.h>
+    #include <mach/mach_time.h>
+    #include <Accelerate/Accelerate.h>
+#else
+    #include <CL/cl.h>
+#endif
+#include <clFFT.h>
 #include "procs.h"
 #include <sys/types.h>
 #include <sys/stat.h>
@@ -87,6 +91,7 @@ cl_command_queue queue;
 
 typedef unsigned long long ulong;
 
+#ifdef __APPLE__
 double subtractTimes( uint64_t endTime, uint64_t startTime )
 {
     uint64_t difference = endTime - startTime;
@@ -104,7 +109,9 @@ double subtractTimes( uint64_t endTime, uint64_t startTime )
     
     return conversion * (double) difference;
 }
+#endif
 
+#ifdef __APPLE__
 void computeReferenceF(clFFT_SplitComplex *out, clFFT_Dim3 n, 
 					  unsigned int batchSize, clFFT_Dimension dim, clFFT_Direction dir)
 {
@@ -214,7 +221,9 @@ void computeReferenceF(clFFT_SplitComplex *out, clFFT_Dim3 n,
 	
 	vDSP_destroy_fftsetup(plan_vdsp);
 }
+#endif
 
+#ifdef __APPLE__
 void computeReferenceD(clFFT_SplitComplexDouble *out, clFFT_Dim3 n, 
 					  unsigned int batchSize, clFFT_Dimension dim, clFFT_Direction dir)
 {
@@ -324,6 +333,7 @@ void computeReferenceD(clFFT_SplitComplexDouble *out, clFFT_Dim3 n,
 	
 	vDSP_destroy_fftsetupD(plan_vdsp);
 }
+#endif
 
 double complexNormSq(clFFT_ComplexDouble a)
 {
@@ -550,12 +560,14 @@ int runTest(clFFT_Dim3 n, int batchSize, clFFT_Direction dir, clFFT_Dimension di
 		log_error("clFFT_Execute\n");
 		goto cleanup;	
 	}
-	
+
+#ifdef __APPLE__
 	t1 = mach_absolute_time(); 
 	t = subtractTimes(t1, t0);
 	char temp[100];
 	sprintf(temp, "GFlops achieved for n = (%d, %d, %d), batchsize = %d", n.x, n.y, n.z, batchSize);
 	log_perf(gflops / (float) t, 1, "GFlops/s", "%s", temp);
+#endif
 
 	if(dataFormat == clFFT_SplitComplexFormat)
 	{	
@@ -573,6 +585,7 @@ int runTest(clFFT_Dim3 n, int batchSize, clFFT_Direction dir, clFFT_Dimension di
         goto cleanup;
 	}	
 
+#ifdef __APPLE__
 	computeReferenceD(&data_oref, n, batchSize, dim, dir);
 	
 	double diff_avg, diff_max, diff_min;
@@ -597,7 +610,8 @@ int runTest(clFFT_Dim3 n, int batchSize, clFFT_Direction dir, clFFT_Dimension di
 		free(result_split.real);
 		free(result_split.imag);
 	}
-	
+#endif
+
 cleanup:
 	clFFT_DestroyPlan(plan);	
 	if(dataFormat == clFFT_SplitComplexFormat) 
@@ -726,7 +740,7 @@ int main (int argc, char * const argv[]) {
 	}
 	
 	device_id = NULL;
-/*	
+
 	unsigned int i;
 	for(i = 0; i < num_devices; i++)
 	{
@@ -763,8 +777,7 @@ int main (int argc, char * const argv[]) {
 	    test_finish();
 	    return -1;
 	}
-*/
-device_id = device_ids[1];
+
 	context = clCreateContext(0, 1, &device_id, NULL, NULL, &err);
 	if(!context || err) 
 	{

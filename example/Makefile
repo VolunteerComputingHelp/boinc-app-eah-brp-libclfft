@@ -11,6 +11,7 @@ OS = $(shell uname -s)
 ARCH = $(shell uname -m)
 ifeq ($(OS), Darwin)
 	LDFLAGS += -framework OpenCL
+	LDFLAGS += -framework Accelerate
 else
 	LDFLAGS += -L$(ATISTREAMSDKROOT)/lib/$(ARCH)
 	LDFLAGS += -lOpenCL
