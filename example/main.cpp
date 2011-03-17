@@ -737,7 +737,7 @@ int main (int argc, char * const argv[]) {
 	err = clGetDeviceIDs(NULL, device_type, sizeof(device_ids), device_ids, &num_devices);
 	if(err) 
 	{		
-		log_error("clGetComputeDevice failed\n");
+		printf("ERROR: clGetDeviceIDs failed with error: %d\n", err);
 		test_finish();
 		return -1;
 	}
