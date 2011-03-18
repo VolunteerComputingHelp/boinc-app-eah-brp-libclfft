@@ -65,7 +65,7 @@
 #include <float.h>
 
 #define eps_avg 10.0
-
+#define MAX_DEVICES 16
 #define MAX( _a, _b)    ((_a)>(_b)?(_a) : (_b))
 
 typedef enum {
@@ -719,7 +719,7 @@ int main (int argc, char * const argv[]) {
     clFFT_DataFormat dataFormat = clFFT_SplitComplexFormat;
     clFFT_Dimension dim = clFFT_1D;
     clFFT_TestType testType = clFFT_OUT_OF_PLACE;
-    cl_device_id device_ids[16];
+    cl_device_id device_ids[MAX_DEVICES];
 
     FILE *paramFile;
 
@@ -741,6 +741,7 @@ int main (int argc, char * const argv[]) {
         printf("ERROR: clGetPlatformIDs failed with error: %d\n", status);
         return -1;
     }
+
     if (0 < numPlatforms) {
         cl_platform_id* platforms = new cl_platform_id[numPlatforms];
         status = clGetPlatformIDs(numPlatforms, platforms, NULL);
@@ -789,7 +790,7 @@ int main (int argc, char * const argv[]) {
         printf("INFO: Using OpenCL platform provided by: %s\n", vendor);
     }
 
-    err = clGetDeviceIDs(platform, device_type, sizeof(device_ids), device_ids, &num_devices);
+    err = clGetDeviceIDs(platform, device_type, MAX_DEVICES, device_ids, &num_devices);
     if(err)
     {
         printf("ERROR: clGetDeviceIDs failed with error: %d\n", err);
