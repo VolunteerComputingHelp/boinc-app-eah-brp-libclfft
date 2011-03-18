@@ -723,7 +723,7 @@ int main (int argc, char * const argv[]) {
 
     FILE *paramFile;
 
-    cl_int err;
+    cl_int err, status;
     unsigned int num_devices;
 
     cl_device_type device_type = getGlobalDeviceType();
@@ -734,7 +734,62 @@ int main (int argc, char * const argv[]) {
         exit(0);
     }
 
-    err = clGetDeviceIDs(NULL, device_type, sizeof(device_ids), device_ids, &num_devices);
+    cl_uint numPlatforms;
+    cl_platform_id platform = NULL;
+    status = clGetPlatformIDs(0, NULL, &numPlatforms);
+    if(CL_SUCCESS != status) {
+        printf("ERROR: clGetPlatformIDs failed with error: %d\n", status);
+        return -1;
+    }
+    if (0 < numPlatforms) {
+        cl_platform_id* platforms = new cl_platform_id[numPlatforms];
+        status = clGetPlatformIDs(numPlatforms, platforms, NULL);
+        if(CL_SUCCESS != status) {
+            printf("ERROR: clGetPlatformIDs failed with error: %d\n", status);
+            return -1;
+        }
+
+        for (unsigned i = 0; i < numPlatforms; ++i) 
+        {
+            char profile[32] = {0};;
+            status = clGetPlatformInfo(platforms[i],
+                                       CL_PLATFORM_PROFILE,
+                                       sizeof(profile),
+                                       profile,
+                                       NULL);
+            if(CL_SUCCESS != status) {
+                printf("ERROR: clGetPlatformInfo failed with error: %d\n", status);
+                return -1;
+            }
+
+            if (!strcmp(profile, "FULL_PROFILE"))
+            {
+                platform = platforms[i];
+                break;
+            }
+        }
+        delete[] platforms;
+    }
+
+    if( NULL == platform) {
+        log_error("No valid OpenCL platform found!\n");
+        return -1;
+    }
+
+    char vendor[128] = {0};
+    status = clGetPlatformInfo(platform,
+                               CL_PLATFORM_VENDOR,
+                               sizeof(vendor),
+                               vendor,
+                               NULL);
+    if(CL_SUCCESS != status) {
+        printf("WARN: clGetPlatformInfo failed with error: %d\n", status);
+    }
+    else {
+        printf("INFO: Using OpenCL platform provided by: %s\n", vendor);
+    }
+
+    err = clGetDeviceIDs(platform, device_type, sizeof(device_ids), device_ids, &num_devices);
     if(err)
     {
         printf("ERROR: clGetDeviceIDs failed with error: %d\n", err);
@@ -811,7 +866,9 @@ int main (int argc, char * const argv[]) {
         }
     }
 
-    context = clCreateContext(0, 1, &device_id, NULL, NULL, &err);
+    cl_context_properties ctxProps[3] = {CL_CONTEXT_PLATFORM, (cl_context_properties) platform, 0};
+
+    context = clCreateContext(ctxProps, 1, &device_id, NULL, NULL, &err);
     if(!context || err)
     {
         log_error("clCreateContext failed\n");
