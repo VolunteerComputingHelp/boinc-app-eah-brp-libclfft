@@ -61,38 +61,38 @@ using namespace std;
 
 extern void getKernelWorkDimensions(cl_fft_plan *plan, cl_fft_kernel_info *kernelInfo, cl_int *batchSize, size_t *gWorkItems, size_t *lWorkItems);
 
-static void 
+static void
 getBlockConfigAndKernelString(cl_fft_plan *plan)
 {
 	plan->temp_buffer_needed = 0;
 	*plan->kernel_string += baseKernels;
-	
+
 	if(plan->format == clFFT_SplitComplexFormat)
 		*plan->kernel_string += twistKernelPlannar;
 	else
 		*plan->kernel_string += twistKernelInterleaved;
-	
-	switch(plan->dim) 
+
+	switch(plan->dim)
 	{
 		case clFFT_1D:
 			FFT1D(plan, cl_fft_kernel_x);
 			break;
-			
+
 		case clFFT_2D:
-			FFT1D(plan, cl_fft_kernel_x); 
-			FFT1D(plan, cl_fft_kernel_y);  
+			FFT1D(plan, cl_fft_kernel_x);
+			FFT1D(plan, cl_fft_kernel_y);
 			break;
-			
+
 		case clFFT_3D:
-			FFT1D(plan, cl_fft_kernel_x); 
-			FFT1D(plan, cl_fft_kernel_y); 
-			FFT1D(plan, cl_fft_kernel_z); 
+			FFT1D(plan, cl_fft_kernel_x);
+			FFT1D(plan, cl_fft_kernel_y);
+			FFT1D(plan, cl_fft_kernel_z);
 			break;
-			
+
 		default:
 			return;
 	}
-	
+
 	plan->temp_buffer_needed = 0;
 	cl_fft_kernel_info *kInfo = plan->kernel_info;
 	while(kInfo)
@@ -102,7 +102,7 @@ getBlockConfigAndKernelString(cl_fft_plan *plan)
 	}
 }
 
- 
+
 static void
 deleteKernelInfo(cl_fft_kernel_info *kInfo)
 {
@@ -113,7 +113,7 @@ deleteKernelInfo(cl_fft_kernel_info *kInfo)
 	    if(kInfo->kernel)
 		    clReleaseKernel(kInfo->kernel);
 		free(kInfo);
-	}	
+	}
 }
 
 static void
@@ -127,14 +127,14 @@ destroy_plan(cl_fft_plan *Plan)
 		deleteKernelInfo(kernel_info);
 		kernel_info = tmp;
 	}
-	
+
 	Plan->kernel_info = NULL;
-		
+
 	if(Plan->kernel_string)
 	{
 		delete Plan->kernel_string;
 		Plan->kernel_string = NULL;
-	}			
+	}
 	if(Plan->twist_kernel)
 	{
 		clReleaseKernel(Plan->twist_kernel);
@@ -145,7 +145,7 @@ destroy_plan(cl_fft_plan *Plan)
 		clReleaseProgram(Plan->program);
 		Plan->program = NULL;
 	}
-	if(Plan->tempmemobj) 
+	if(Plan->tempmemobj)
 	{
 		clReleaseMemObject(Plan->tempmemobj);
 		Plan->tempmemobj = NULL;
@@ -163,25 +163,25 @@ destroy_plan(cl_fft_plan *Plan)
 }
 
 static int
-createKernelList(cl_fft_plan *plan) 
+createKernelList(cl_fft_plan *plan)
 {
 	cl_program program = plan->program;
 	cl_fft_kernel_info *kernel_info = plan->kernel_info;
-	
+
 	cl_int err;
 	while(kernel_info)
 	{
 		kernel_info->kernel = clCreateKernel(program, kernel_info->kernel_name, &err);
 		if(!kernel_info->kernel || err != CL_SUCCESS)
 			return err;
-		kernel_info = kernel_info->next;		
+		kernel_info = kernel_info->next;
 	}
-	
+
 	if(plan->format == clFFT_SplitComplexFormat)
 		plan->twist_kernel = clCreateKernel(program, "clFFT_1DTwistSplit", &err);
 	else
 		plan->twist_kernel = clCreateKernel(program, "clFFT_1DTwistInterleaved", &err);
-	
+
 	if(!plan->twist_kernel || err)
 		return err;
 
@@ -189,12 +189,12 @@ createKernelList(cl_fft_plan *plan)
 }
 
 int getMaxKernelWorkGroupSize(cl_fft_plan *plan, unsigned int *max_wg_size, unsigned int num_devices, cl_device_id *devices)
-{	
+{
     int reg_needed = 0;
     *max_wg_size = INT_MAX;
     int err;
     size_t wg_size;
-    
+
     unsigned int i;
     for(i = 0; i < num_devices; i++)
     {
@@ -204,19 +204,19 @@ int getMaxKernelWorkGroupSize(cl_fft_plan *plan, unsigned int *max_wg_size, unsi
 		    err = clGetKernelWorkGroupInfo(kInfo->kernel, devices[i], CL_KERNEL_WORK_GROUP_SIZE, sizeof(size_t), &wg_size, NULL);
 		    if(err != CL_SUCCESS)
 		        return -1;
-		        
+
 		    if(wg_size < kInfo->num_workitems_per_workgroup)
 		        reg_needed |= 1;
-		    
+
 		    if(*max_wg_size > wg_size)
 		        *max_wg_size = wg_size;
-		        
+
 		    kInfo = kInfo->next;
 	    }
 	}
-	
+
 	return reg_needed;
-}	
+}
 
 #define ERR_MACRO(err) { \
                          if( err != CL_SUCCESS) \
@@ -241,24 +241,24 @@ clFFT_CreatePlan(cl_context context, clFFT_Dim3 n, clFFT_Dimension dim, clFFT_Da
 	cl_device_id devices[16];
 	size_t ret_size;
 	cl_device_type device_type;
-	
+
     if(!context)
 		ERR_MACRO(CL_INVALID_VALUE);
-	
+
 	isPow2 |= n.x && !( (n.x - 1) & n.x );
 	isPow2 |= n.y && !( (n.y - 1) & n.y );
 	isPow2 |= n.z && !( (n.z - 1) & n.z );
-	
+
 	if(!isPow2)
 		ERR_MACRO(CL_INVALID_VALUE);
-	
+
 	if( (dim == clFFT_1D && (n.y != 1 || n.z != 1)) || (dim == clFFT_2D && n.z != 1) )
 		ERR_MACRO(CL_INVALID_VALUE);
 
 	plan = (cl_fft_plan *) malloc(sizeof(cl_fft_plan));
 	if(!plan)
 		ERR_MACRO(CL_OUT_OF_RESOURCES);
-	
+
 	plan->context = context;
 	clRetainContext(context);
 	plan->n = n;
@@ -277,8 +277,8 @@ clFFT_CreatePlan(cl_context context, clFFT_Dim3 n, clFFT_Dimension dim, clFFT_Da
 	plan->max_work_item_per_workgroup = 256;
 	plan->max_radix = 16;
 	plan->min_mem_coalesce_width = 16;
-	plan->num_local_mem_banks = 16;	
-	
+	plan->num_local_mem_banks = 16;
+
 patch_kernel_source:
 
 	plan->kernel_string = new string("");
@@ -286,97 +286,97 @@ patch_kernel_source:
         ERR_MACRO(CL_OUT_OF_RESOURCES);
 
 	getBlockConfigAndKernelString(plan);
-	
+
 	const char *source_str = plan->kernel_string->c_str();
 	plan->program = clCreateProgramWithSource(context, 1, (const char**) &source_str, NULL, &err);
     ERR_MACRO(err);
 
 	err = clGetContextInfo(context, CL_CONTEXT_DEVICES, sizeof(devices), devices, &ret_size);
 	ERR_MACRO(err);
-	
+
 	num_devices = ret_size / sizeof(cl_device_id);
-	
+
 	for(i = 0; i < num_devices; i++)
 	{
 		err = clGetDeviceInfo(devices[i], CL_DEVICE_TYPE, sizeof(device_type), &device_type, NULL);
 		ERR_MACRO(err);
-		
+
 		if(device_type == CL_DEVICE_TYPE_GPU)
-		{	
+		{
 			gpu_found = 1;
 	        err = clBuildProgram(plan->program, 1, &devices[i], "-cl-mad-enable", NULL, NULL);
 	        if (err != CL_SUCCESS)
 	        {
-		        char *build_log;				
+		        char *build_log;
 				char devicename[200];
 		        size_t log_size;
-				
+
 		        err = clGetProgramBuildInfo(plan->program, devices[i], CL_PROGRAM_BUILD_LOG, 0, NULL, &log_size);
 				ERR_MACRO(err);
-				
+
 		        build_log = (char *) malloc(log_size + 1);
-				
+
 			    err = clGetProgramBuildInfo(plan->program, devices[i], CL_PROGRAM_BUILD_LOG, log_size, build_log, NULL);
 				ERR_MACRO(err);
-				
+
 				err = clGetDeviceInfo(devices[i], CL_DEVICE_NAME, sizeof(devicename), devicename, NULL);
 				ERR_MACRO(err);
-				
+
 				fprintf(stdout, "FFT program build log on device %s\n", devicename);
 		        fprintf(stdout, "%s\n", build_log);
 		        free(build_log);
-				
+
 				ERR_MACRO(err);
-			}	
-		}	
+			}
+		}
 	}
-	
+
 	if(!gpu_found)
 		ERR_MACRO(CL_INVALID_CONTEXT);
-	
-	err = createKernelList(plan); 
+
+	err = createKernelList(plan);
     ERR_MACRO(err);
-    
+
     // we created program and kernels based on "some max work group size (default 256)" ... this work group size
-    // may be larger than what kernel may execute with ... if thats the case we need to regenerate the kernel source 
-    // setting this as limit i.e max group size and rebuild. 
-	unsigned int max_kernel_wg_size; 
+    // may be larger than what kernel may execute with ... if thats the case we need to regenerate the kernel source
+    // setting this as limit i.e max group size and rebuild.
+	unsigned int max_kernel_wg_size;
 	int patching_req = getMaxKernelWorkGroupSize(plan, &max_kernel_wg_size, num_devices, devices);
 	if(patching_req == -1)
 	{
 	    ERR_MACRO(err);
 	}
-	
+
 	if(patching_req)
 	{
 	    destroy_plan(plan);
 	    plan->max_work_item_per_workgroup = max_kernel_wg_size;
 	    goto patch_kernel_source;
 	}
-	
+
 	cl_fft_kernel_info *kInfo = plan->kernel_info;
 	while(kInfo)
 	{
 		plan->num_kernels++;
 		kInfo = kInfo->next;
 	}
-	
+
 	if(error_code)
 		*error_code = CL_SUCCESS;
-			
+
 	return (clFFT_Plan) plan;
 }
 
-void		 
+void
 clFFT_DestroyPlan(clFFT_Plan plan)
 {
     cl_fft_plan *Plan = (cl_fft_plan *) plan;
-	if(Plan) 
-	{	
-		destroy_plan(Plan);	
+	if(Plan)
+	{
+		destroy_plan(Plan);
 		clReleaseContext(Plan->context);
 		free(Plan);
-	}		
+	}
 }
 
 void clFFT_DumpPlan( clFFT_Plan Plan, FILE *file)
@@ -385,12 +385,12 @@ void clFFT_DumpPlan( clFFT_Plan Plan, FILE *file)
 	FILE *out;
 	if(!file)
 		out = stdout;
-	else 
+	else
 		out = file;
-	
+
 	cl_fft_plan *plan = (cl_fft_plan *) Plan;
 	cl_fft_kernel_info *kInfo = plan->kernel_info;
-	
+
 	while(kInfo)
 	{
 		cl_int s = 1;
