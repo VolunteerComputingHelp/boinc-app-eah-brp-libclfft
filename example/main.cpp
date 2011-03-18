@@ -805,7 +805,7 @@ int main (int argc, char * const argv[]) {
         err = clGetDeviceInfo(device_ids[atoi(argv[2])], CL_DEVICE_AVAILABLE, sizeof(cl_bool), &available, NULL);
         if(err) {
             printf("ERROR: Cannot check device availability of device # %d\n", atoi(argv[2]));
-                return -1;
+            return -1;
         }
 
         if(available) {
@@ -982,5 +982,10 @@ int main (int argc, char * const argv[]) {
     clReleaseCommandQueue(queue);
 
     test_finish();
+
+#ifndef __APPLE___
+    printf("Test finished (validation only available on Mac OS X)! Total number of errors: %d\n", total_errors);
+#endif
+
     return total_errors;
 }
