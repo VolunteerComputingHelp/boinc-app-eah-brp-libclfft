@@ -983,7 +983,7 @@ int main (int argc, char * const argv[]) {
 
     test_finish();
 
-#ifndef __APPLE___
+#ifndef __APPLE__
     printf("Test finished (validation only available on Mac OS X)! Total number of errors: %d\n", total_errors);
 #endif
 
