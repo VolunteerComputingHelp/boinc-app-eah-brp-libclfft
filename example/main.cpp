@@ -616,8 +616,6 @@ int runTest(clFFT_Dim3 n, int batchSize, clFFT_Direction dir, clFFT_Dimension di
     }
 #else
     log_info("Output power spectrum for manual validation (normalized):\n");
-    
-    printf("n: %u, length: %i\n", n.x * n.y * n.z, length);
     if(dataFormat != clFFT_SplitComplexFormat) {
         clFFT_SplitComplex result_split;
         result_split.real = (float *) malloc(length*sizeof(float));
