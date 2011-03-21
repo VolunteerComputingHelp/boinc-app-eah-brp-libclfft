@@ -393,7 +393,7 @@ int runTest(clFFT_Dim3 n, int batchSize, clFFT_Direction dir, clFFT_Dimension di
 #endif
 
     int length = n.x * n.y * n.z * batchSize;
-    float normFactor = 1.0 / (n.x * n.y * n.z);
+    float normFactor = 1.0 / 256.0;
 
     clFFT_SplitComplex data_i_split = (clFFT_SplitComplex) { NULL, NULL };
     clFFT_SplitComplex data_cl_split = (clFFT_SplitComplex) { NULL, NULL };
