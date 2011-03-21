@@ -376,7 +376,7 @@ void convertInterleavedToSplit(clFFT_SplitComplex *result_split, clFFT_Complex *
 }
 
 int runTest(clFFT_Dim3 n, int batchSize, clFFT_Direction dir, clFFT_Dimension dim,
-            clFFT_DataFormat dataFormat, int numIter, clFFT_TestType testType)
+            clFFT_DataFormat dataFormat, int numIter, clFFT_TestType testType, int debugEnabled)
 {
     cl_int err = CL_SUCCESS;
     int iter;
@@ -614,25 +614,27 @@ int runTest(clFFT_Dim3 n, int batchSize, clFFT_Direction dir, clFFT_Dimension di
         free(result_split.real);
         free(result_split.imag);
     }
-#else
-    log_info("Output power spectrum for manual validation (normalized):\n");
-    if(dataFormat != clFFT_SplitComplexFormat) {
-        clFFT_SplitComplex result_split;
-        result_split.real = (float *) malloc(length*sizeof(float));
-        result_split.imag = (float *) malloc(length*sizeof(float));
-        convertInterleavedToSplit(&result_split, data_cl, length);
-        for(int i = 0; i < length; ++i) {
-            printf("%f\n", normFactor * (result_split.real[i]*result_split.real[i] + result_split.imag[i]*result_split.imag[i]));
-        }
-        free(result_split.real);
-        free(result_split.imag);
-    }
-    else {
-        for(int i = 0; i < length; ++i) {
-            printf("%f\n", normFactor * (data_cl_split.real[i]*data_cl_split.real[i] + data_cl_split.imag[i]*data_cl_split.imag[i]));
-        }
-    }
 #endif
+
+    if(debugEnabled) {
+        log_info("Output power spectrum for manual validation (normalized):\n");
+        if(dataFormat != clFFT_SplitComplexFormat) {
+            clFFT_SplitComplex result_split;
+            result_split.real = (float *) malloc(length*sizeof(float));
+            result_split.imag = (float *) malloc(length*sizeof(float));
+            convertInterleavedToSplit(&result_split, data_cl, length);
+            for(int i = 0; i < length; ++i) {
+                printf("%f\n", normFactor * (result_split.real[i]*result_split.real[i] + result_split.imag[i]*result_split.imag[i]));
+            }
+            free(result_split.real);
+            free(result_split.imag);
+        }
+        else {
+            for(int i = 0; i < length; ++i) {
+                printf("%f\n", normFactor * (data_cl_split.real[i]*data_cl_split.real[i] + data_cl_split.imag[i]*data_cl_split.imag[i]));
+            }
+        }
+    }
 
 cleanup:
     clFFT_DestroyPlan(plan);
@@ -739,6 +741,8 @@ int main (int argc, char * const argv[]) {
     clFFT_Dimension dim = clFFT_1D;
     clFFT_TestType testType = clFFT_OUT_OF_PLACE;
     cl_device_id device_ids[MAX_DEVICES];
+
+    int debugEnabled = 0;
 
     FILE *paramFile;
 
@@ -928,6 +932,10 @@ int main (int argc, char * const argv[]) {
         return -1;
     }
 
+    if(4 == argc && 1 == !strcmp(argv[3], "debug")) {
+        debugEnabled = 1;
+    }
+
     if(argc >= 2) { // arguments are supplied in a file with arguments for a single run are all on the same line
         paramFile = fopen(argv[1], "r");
         if(!paramFile) {
@@ -992,7 +1000,7 @@ int main (int argc, char * const argv[]) {
                 continue;
             }
 
-            err = runTest(n, batchSize, dir, dim, dataFormat, numIter, testType);
+            err = runTest(n, batchSize, dir, dim, dataFormat, numIter, testType, debugEnabled);
             if (err)
                 total_errors++;
         }
