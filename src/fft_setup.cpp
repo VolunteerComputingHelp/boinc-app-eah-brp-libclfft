@@ -395,7 +395,7 @@ void clFFT_DumpPlan( clFFT_Plan Plan, FILE *file)
     {
         cl_int s = 1;
         getKernelWorkDimensions(plan, kInfo, &s, &gDim, &lDim);
-        fprintf(out, "Run kernel %s with global dim = {%zd*BatchSize}, local dim={%zd}\n", kInfo->kernel_name, gDim, lDim);
+        fprintf(out, "Run kernel %s with global dim = {%lu*BatchSize}, local dim={%lu}\n", kInfo->kernel_name, (unsigned long)gDim, (unsigned long)lDim);
         kInfo = kInfo->next;
     }
     fprintf(out, "%s\n", plan->kernel_string->c_str());
