@@ -393,6 +393,7 @@ int runTest(clFFT_Dim3 n, int batchSize, clFFT_Direction dir, clFFT_Dimension di
 #endif
 
     int length = n.x * n.y * n.z * batchSize;
+    float normFactor = 1.0 / (n.x * n.y * n.z);
 
     clFFT_SplitComplex data_i_split = (clFFT_SplitComplex) { NULL, NULL };
     clFFT_SplitComplex data_cl_split = (clFFT_SplitComplex) { NULL, NULL };
@@ -612,6 +613,26 @@ int runTest(clFFT_Dim3 n, int batchSize, clFFT_Direction dir, clFFT_Dimension di
             log_info("Test passed (n=(%d, %d, %d), batchsize=%d): %s Test: rel. L2-error = %f eps (max=%f eps, min=%f eps)\n", n.x, n.y, n.z, batchSize, (testType == clFFT_OUT_OF_PLACE) ? "out-of-place" : "in-place", diff_avg, diff_max, diff_min);
         free(result_split.real);
         free(result_split.imag);
+    }
+#else
+    log_info("Output power spectrum for manual validation (normalized):\n");
+    
+    printf("n: %u, length: %i\n", n.x * n.y * n.z, length);
+    if(dataFormat != clFFT_SplitComplexFormat) {
+        clFFT_SplitComplex result_split;
+        result_split.real = (float *) malloc(length*sizeof(float));
+        result_split.imag = (float *) malloc(length*sizeof(float));
+        convertInterleavedToSplit(&result_split, data_cl, length);
+        for(int i = 0; i < length; ++i) {
+            printf("%f\n", normFactor * (result_split.real[i]*result_split.real[i] + result_split.imag[i]*result_split.imag[i]));
+        }
+        free(result_split.real);
+        free(result_split.imag);
+    }
+    else {
+        for(int i = 0; i < length; ++i) {
+            printf("%f\n", normFactor * (data_cl_split.real[i]*data_cl_split.real[i] + data_cl_split.imag[i]*data_cl_split.imag[i]));
+        }
     }
 #endif
 
