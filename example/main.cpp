@@ -824,7 +824,7 @@ int main (int argc, char * const argv[]) {
     device_id = NULL;
     unsigned int i = 0;
 
-    if (argc == 3) {
+    if (argc >= 3) {
         cl_bool available;
         err = clGetDeviceInfo(device_ids[atoi(argv[2])], CL_DEVICE_AVAILABLE, sizeof(cl_bool), &available, NULL);
         if(err) {
