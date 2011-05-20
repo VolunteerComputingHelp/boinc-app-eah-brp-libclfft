@@ -826,11 +826,13 @@ int main (int argc, char * const argv[]) {
     }
 
     err = clGetDeviceIDs(platform, device_type, MAX_DEVICES, device_ids, &num_devices);
-    if(err)
-    {
+    if(err) {
         printf("ERROR: clGetDeviceIDs failed with error: %d\n", err);
         test_finish();
         return -1;
+    }
+    else {
+        printf("INFO: Found %d suitable device(s)...\n", num_devices);
     }
 
     device_id = NULL;
