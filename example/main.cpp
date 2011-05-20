@@ -374,7 +374,7 @@ void convertInterleavedToSplit(clFFT_SplitComplex *result_split, clFFT_Complex *
     }
 }
 
-int runTest(clFFT_Dim3 n, int batchSize, clFFT_Direction dir, clFFT_Dimension dim,
+int runTest(FILE *input, clFFT_Dim3 n, int batchSize, clFFT_Direction dir, clFFT_Dimension dim,
             clFFT_DataFormat dataFormat, int numIter, clFFT_TestType testType, int debugEnabled)
 {
     cl_int err = CL_SUCCESS;
@@ -453,6 +453,18 @@ int runTest(clFFT_Dim3 n, int batchSize, clFFT_Direction dir, clFFT_Dimension di
             data_cl_split.imag[i] = 0.0f;
             data_iref.real[i] = data_i_split.real[i];
             data_iref.imag[i] = data_i_split.imag[i];
+            data_oref.real[i] = data_iref.real[i];
+            data_oref.imag[i] = data_iref.imag[i];
+        }
+    }
+    else if(NULL != input) {
+        for(i = 0; i < length; i++) {
+            fscanf(input, "%f\n", &data_i[i].real);
+            data_i[i].imag  = 0.0f;
+            data_cl[i].real = 0.0f;
+            data_cl[i].imag = 0.0f;
+            data_iref.real[i] = data_i[i].real;
+            data_iref.imag[i] = data_i[i].imag;
             data_oref.real[i] = data_iref.real[i];
             data_oref.imag[i] = data_iref.imag[i];
         }
@@ -731,6 +743,7 @@ int main (int argc, char * const argv[]) {
 
     test_start();
 
+    FILE *inputData = NULL;
     cl_ulong gMemSize;
     clFFT_Direction dir = clFFT_Forward;
     int numIter = 1;
@@ -922,7 +935,7 @@ int main (int argc, char * const argv[]) {
 
     char delim[] = " \n";
     char tmpStr[100];
-    char line[200];
+    char line[500];
     char *param, *val;
     int total_errors = 0;
     if(argc == 1) {
@@ -944,7 +957,7 @@ int main (int argc, char * const argv[]) {
             test_finish();
             return -3;
         }
-        while(fgets(line, 199, paramFile)) {
+        while(fgets(line, 499, paramFile)) {
             if(!strcmp(line, "") || !strcmp(line, "\n") || ifLineCommented(line))
                 continue;
             param = strtok(line, delim);
@@ -991,6 +1004,16 @@ int main (int argc, char * const argv[]) {
                     else if(!strcmp(tmpStr, "in-place"))
                         testType = clFFT_IN_PLACE;
                 }
+                else if(!strcmp(param, "-inputdatafile")) {
+                    sscanf(val, "%s", tmpStr);
+                    inputData = fopen (tmpStr, "r");
+                    if(!inputData) {
+                        printf("ERROR: Couldn't open input data file (%s)! Using random data instead...\n", val);
+                    }
+                    else {
+                        printf("INFO: Using input data file \"%s\"...\n", val);
+                    }
+                }
                 param = strtok(NULL, delim);
             }
 
@@ -999,7 +1022,7 @@ int main (int argc, char * const argv[]) {
                 continue;
             }
 
-            err = runTest(n, batchSize, dir, dim, dataFormat, numIter, testType, debugEnabled);
+            err = runTest(inputData, n, batchSize, dir, dim, dataFormat, numIter, testType, debugEnabled);
             if (err)
                 total_errors++;
         }
