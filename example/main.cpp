@@ -1,4 +1,3 @@
-
 //
 // File:       main.cpp
 //
@@ -773,7 +772,7 @@ int main (int argc, char * const argv[]) {
             return -1;
         }
 
-        for (unsigned i = 0; i < numPlatforms; ++i) 
+        for (unsigned i = 0; i < numPlatforms; ++i)
         {
             char profile[32] = {0};;
             status = clGetPlatformInfo(platforms[i],
