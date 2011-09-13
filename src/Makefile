@@ -1,9 +1,9 @@
 NVIDIA_SDK_INSTALL_PATH ?= /usr/local/cuda
-ATISTREAMSDKROOT ?= /usr/local/ati
+AMDAPPSDKROOT ?= /opt/AMDAPP
 
 TARGET = libclfft.a
 
-CXXFLAGS += -O3 -Wall -g -I$(NVIDIA_SDK_INSTALL_PATH)/OpenCL/common/inc -I$(ATISTREAMSDKROOT)/include -I../include
+CXXFLAGS += -O3 -Wall -g -I$(NVIDIA_SDK_INSTALL_PATH)/OpenCL/common/inc -I$(AMDAPPSDKROOT)/include -I../include
 OS = $(shell uname -s)
 ifeq ($(OS), Darwin)
 	CXXFLAGS += -I/System/Library/Frameworks
