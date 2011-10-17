@@ -9,6 +9,9 @@ LDFLAGS += $(PWD)/../lib/libclfft.a
 
 OS = $(shell uname -s)
 ARCH = $(shell uname -m)
+ifneq ($(ARCH), x86_64)
+        ARCH = x86
+endif
 ifeq ($(OS), Darwin)
 	LDFLAGS += -framework OpenCL
 	LDFLAGS += -framework Accelerate
