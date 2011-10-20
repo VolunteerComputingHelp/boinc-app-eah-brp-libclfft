@@ -1,11 +1,11 @@
 PWD = $(shell pwd)
 NVIDIA_SDK_INSTALL_PATH ?= /usr/local/cuda
-ATISTREAMSDKROOT ?= /usr/local/ati
+AMDAPPSDKROOT ?= /opt/AMDAPP
 
 TARGET = clfft_example.exe
 
-CXXFLAGS += -O3 -Wall -g -I$(NVIDIA_SDK_INSTALL_PATH)/OpenCL/common/inc -I$(ATISTREAMSDKROOT)/include -I../include -D_WIN32_WINDOWS=0x0410 -malign-double
-LDFLAGS += $(PWD)/../lib/libclfft.a ../lib/amd/win32/2.3/OpenCL.lib
+CXXFLAGS += -O3 -Wall -g -I$(NVIDIA_SDK_INSTALL_PATH)/OpenCL/common/inc -I$(AMDAPPSDKROOT)/include -I../include -D_WIN32_WINDOWS=0x0410 -malign-double
+LDFLAGS += $(PWD)/../lib/libclfft.a ../lib/amd/win32/2.5/OpenCL.lib
 
 $(TARGET): main.cpp Makefile $(PWD)/../lib/libclfft.a
 	i586-mingw32msvc-g++ $(CXXFLAGS) main.cpp $(LDFLAGS) -o $(TARGET)
