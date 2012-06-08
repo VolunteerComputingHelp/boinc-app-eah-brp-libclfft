@@ -94,7 +94,7 @@ typedef struct
     // n, dim, format and other parameters
     string                  *kernel_string;
 
-    // CL program containing source and kernel this particular
+    // CL program containing source and kernel for this particular
     // n, dim, data format
     cl_program              program;
 
@@ -134,6 +134,17 @@ typedef struct
     // data format of plan (plannar or interleaved)
     cl_mem                  tempmemobj_real, tempmemobj_imag;
 
+
+    // precomputed lookup tables for sin,cos calculations, each of size 
+    // sqrt(n) or 2*sqrt(n), n is size of signal;
+ 	
+    cl_mem                  sin_LUT_d1,sin_LUT_d2;
+    cl_mem                  cos_LUT_d1,cos_LUT_d2;
+    int                     logN1;
+    int                     logN2;
+    size_t                  N1; 
+    size_t                  N2;
+    
     // Maximum size of signal for which local memory transposed based
     // fft is sufficient i.e. no global mem transpose (communication)
     // is needed

@@ -181,9 +181,15 @@ static void
 insertHeader(string &kernelString, string &kernelName, clFFT_DataFormat dataFormat)
 {
     if(dataFormat == clFFT_SplitComplexFormat)
-        kernelString += string("__kernel void ") + kernelName + string("(__global float *in_real, __global float *in_imag, __global float *out_real, __global float *out_imag, int dir, int S)\n");
-    else
-        kernelString += string("__kernel void ") + kernelName + string("(__global float2 *in, __global float2 *out, int dir, int S)\n");
+        kernelString += string("__kernel void ") + kernelName + string("(__global float *in_real, __global float *in_imag, __global float *out_real, __global float *out_imag, int dir, int S,"
+                                                                          
+                                                                           "__global float * sinLUT1, __global float * cosLUT1, __global float * sinLUT2, __global float * cosLUT2)\n");
+    
+//     "__constant float * sinLUT1, __constant float * cosLUT1, __constant float * sinLUT2, __constant float * cosLUT2)\n");
+        else
+//        kernelString += string("__kernel void ") + kernelName + string("(__global float2 *in, __global float2 *out, int dir, int S, __constant float * sinLUT1, __constant float * cosLUT1, __constant float * sinLUT2, __constant float * cosLUT2)\n");
+    kernelString += string("__kernel void ") + kernelName + string("(__global float2 *in, __global float2 *out, int dir, int S, __global float * sinLUT1, __global float * cosLUT1, __global float * sinLUT2, __global float * cosLUT2)\n");
+
 }
 
 static void
@@ -579,6 +585,8 @@ insertfftKernel(string &kernelString, int Nr, int numIter)
     }
 }
 
+
+
 static void
 insertTwiddleKernel(string &kernelString, int Nr, int numIter, int Nprev, int len, int numWorkItemsPerXForm)
 {
@@ -611,6 +619,10 @@ insertTwiddleKernel(string &kernelString, int Nr, int numIter, int Nprev, int le
         }
     }
 }
+
+
+
+
 
 static int
 getPadding(int numWorkItemsPerXForm, int Nprev, int numWorkItemsReq, int numXFormsPerWG, int Nr, int numBanks, int *offset, int *midPad)
@@ -911,6 +923,89 @@ getGlobalRadixInfo(int n, int *radix, int *R1, int *R2, int *numRadices)
     }
 }
 
+// generate code to calculate cos(w),sin(w) and assign to a variable varRes 
+// where w= dir * 2.0 * PI * num/denom * {expr}
+// and    dir is a variable in the generated code
+//        PI can be assumed to be defined by the macro M_PI
+//        num and denom are integers passed to the function
+//        expr is C++ code for an expression evaluating to an integer, 
+//             such that num * value(expr)< denom
+
+static void 
+insertSinCosCalcDirect(string & kernel_string, cl_fft_plan *plan, int num, int denom , string & expr, string & varRes) 
+{
+    if(denom & (denom-1)) {
+        kernel_string += string("ang = dir*(2.0f*M_PI*") + num2str(num) + string("/") + num2str(denom) + string(")*("+expr+");\n");        
+    } else {
+        // denom is a power of two  
+        int logDenom =0;
+        int d= denom;
+        while (d != 1) {
+            logDenom++;
+            d >>= 1;
+        }
+        int pi_exp=1+1-logDenom;
+        string pi_mult_hex = string("0x1.921fb54442d18p") + (pi_exp>0 ? string("+") : string("")) + num2str(pi_exp);
+        switch (num) { 
+            case 0 : 
+                kernel_string += string("ang = 0.0f;\n");  
+                break;
+            case 1 : 
+                kernel_string += string("ang = dir*(" + pi_mult_hex + string(") * (")+expr+");\n");   
+                break;
+            default:     
+                float pi2=0x1.921fb54442d18p+2;
+                char tw[200];
+                sprintf(tw,"%a",pi2*num / (float) denom);
+                kernel_string += string("ang = dir*(" + string(tw) + string(") * (")+expr+");\n"); 
+                break;
+        }
+    }
+    kernel_string += varRes+string(" = (float2)(native_cos(ang), native_sin(ang));\n");
+}
+
+static void 
+insertSinCosCalc(string & kernel_string, cl_fft_plan *plan, int num, int denom , string & expr, string & varRes) 
+{
+    if(denom & (denom-1)) {
+        kernel_string += string("ang = dir*(2.0f*M_PI*") + num2str(num) + string("/") + num2str(denom) + string(")*("+expr+");\n");        
+        kernel_string += varRes+string(" = (float2)(native_cos(ang), native_sin(ang));\n");
+    } else {
+
+        switch (num) { 
+            case 0 : 
+                kernel_string += string("ang = 0.0f;\n");  
+                kernel_string += varRes+string(" = (float2)(1.0f, 0.0f);\n");
+                break;
+            default:     
+                int num_norm = num*(plan->N1 * plan->N2)/denom;
+                
+                if(num_norm % plan->N1 == 0) {
+                    
+                    kernel_string += string("{ int ang_index = ") + num2str(num_norm) + string(" * ( ") + expr + string(") ; \n");  
+                    kernel_string += string("  int ang_index_k = (ang_index >> " ) + num2str(plan->logN1)+ string(") & "+num2str(plan->N2-1)+ ";\n");
+                    kernel_string += string("  cos_sinLUT1("+varRes+",dir,ang_index_k,sinLUT2,cosLUT2);\n");
+                    kernel_string += string("}\n");
+                    
+                    
+                    
+                } else {
+//                    insertSinCosCalcDirect(kernel_string,plan,num,denom,expr,varRes);
+                    
+                    kernel_string += string("{ int ang_index = ") + num2str(num_norm) + string(" * ( ") + expr + string(") ; \n");  
+                    kernel_string += string("  int ang_index_k = ((ang_index >> " ) + num2str(plan->logN1)+ string(") & "+num2str(plan->N2-1)+ ");\n");
+                    kernel_string += string("  int ang_index_i = (ang_index & " ) + num2str(plan->N1-1)+ string(");\n");
+                    kernel_string += string("  cos_sinLUT2("+varRes+",dir,ang_index_i,ang_index_k,sinLUT1,cosLUT1,sinLUT2,cosLUT2);\n");
+                    kernel_string += string("}\n");
+
+                }    
+                break;
+        }
+    }
+}
+
+
+
 static void
 createGlobalFFTKernelString(cl_fft_plan *plan, int n, int BS, cl_fft_kernel_dir dir, int vertBS)
 {
@@ -1075,10 +1170,14 @@ createGlobalFFTKernelString(cl_fft_plan *plan, int n, int BS, cl_fft_kernel_dir 
         if(R2 > 1)
         {
             // twiddle
+            string expr = string("j");
+            string resVar = string("w");
+
             for(k = 1; k < R1; k++)
             {
-                localString += string("ang = dir*(2.0f*M_PI*") + num2str(k) + string("/") + num2str(radix) + string(")*j;\n");
-                localString += string("w = (float2)(native_cos(ang), native_sin(ang));\n");
+                insertSinCosCalc(localString,plan, k, radix , expr, resVar);              
+//                localString += string("ang = dir*(2.0f*M_PI*") + num2str(k) + string("/") + num2str(radix) + string(")*j;\n");
+//                localString += string("w = (float2)(native_cos(ang), native_sin(ang));\n");
                 localString += string("a[") + num2str(k) + string("] = complexMul(a[") + num2str(k) + string("], w);\n");
             }
 
@@ -1111,11 +1210,20 @@ createGlobalFFTKernelString(cl_fft_plan *plan, int n, int BS, cl_fft_kernel_dir 
         {
             localString += string("l = ((bNum << ") + num2str(lgBatchSize) + string(") + i) >> ") + num2str(lgStrideO) + string(";\n");
             localString += string("k = j << ") + num2str((int)log2(R1/R2)) + string(";\n");
-            localString += string("ang1 = dir*(2.0f*M_PI/") + num2str(N) + string(")*l;\n");
+//            localString += string("ang1 = dir*(2.0f*M_PI/") + num2str(N) + string(")*l;\n");
+            
+            string varRes=string("w");
+            
+            
             for(t = 0; t < R1; t++)
             {
-                localString += string("ang = ang1*(k + ") + num2str((t%R2)*R1 + (t/R2)) + string(");\n");
-                localString += string("w = (float2)(native_cos(ang), native_sin(ang));\n");
+                string expr = string("l * (k + ") + num2str((t%R2)*R1 + (t/R2)) + string(")");
+                
+                insertSinCosCalc(localString, plan, 1, N , expr, varRes) ;
+                
+                
+//                localString += string("ang = ang1*(k + ") + num2str((t%R2)*R1 + (t/R2)) + string(");\n");
+//                localString += string("w = (float2)(native_cos(ang), native_sin(ang));\n");
                 localString += string("a[") + num2str(t) + string("] = complexMul(a[") + num2str(t) + string("], w);\n");
             }
         }
@@ -1254,4 +1362,5 @@ void FFT1D(cl_fft_plan *plan, cl_fft_kernel_dir dir)
             return;
     }
 }
+
 

@@ -180,6 +180,11 @@ clFFT_ExecuteInterleaved( cl_command_queue queue, clFFT_Plan Plan, cl_int batchS
             err |= clSetKernelArg(kernelInfo->kernel, 1, sizeof(cl_mem), &memObj[currWrite]);
             err |= clSetKernelArg(kernelInfo->kernel, 2, sizeof(cl_int), &dir);
             err |= clSetKernelArg(kernelInfo->kernel, 3, sizeof(cl_int), &s);
+            err |= clSetKernelArg(kernelInfo->kernel, 4, sizeof(cl_mem), &(plan->sin_LUT_d1));
+            err |= clSetKernelArg(kernelInfo->kernel, 5, sizeof(cl_mem), &(plan->cos_LUT_d1));
+            err |= clSetKernelArg(kernelInfo->kernel, 6, sizeof(cl_mem), &(plan->sin_LUT_d2));
+            err |= clSetKernelArg(kernelInfo->kernel, 7, sizeof(cl_mem), &(plan->cos_LUT_d2));
+            
 
             err |= clEnqueueNDRangeKernel(queue,  kernelInfo->kernel, 1, NULL, &gWorkItems, &lWorkItems, 0, NULL, NULL);
             if(err)
@@ -203,6 +208,10 @@ clFFT_ExecuteInterleaved( cl_command_queue queue, clFFT_Plan Plan, cl_int batchS
             err |= clSetKernelArg(kernelInfo->kernel, 1, sizeof(cl_mem), &memObj[currWrite]);
             err |= clSetKernelArg(kernelInfo->kernel, 2, sizeof(cl_int), &dir);
             err |= clSetKernelArg(kernelInfo->kernel, 3, sizeof(cl_int), &s);
+            err |= clSetKernelArg(kernelInfo->kernel, 4, sizeof(cl_mem), &(plan->sin_LUT_d1));
+            err |= clSetKernelArg(kernelInfo->kernel, 5, sizeof(cl_mem), &(plan->cos_LUT_d1));
+            err |= clSetKernelArg(kernelInfo->kernel, 6, sizeof(cl_mem), &(plan->sin_LUT_d2));
+            err |= clSetKernelArg(kernelInfo->kernel, 7, sizeof(cl_mem), &(plan->cos_LUT_d2));
 
             err |= clEnqueueNDRangeKernel(queue,  kernelInfo->kernel, 1, NULL, &gWorkItems, &lWorkItems, 0, NULL, NULL);
             if(err)
@@ -285,6 +294,12 @@ clFFT_ExecutePlannar( cl_command_queue queue, clFFT_Plan Plan, cl_int batchSize,
             err |= clSetKernelArg(kernelInfo->kernel, 3, sizeof(cl_mem), &memObj_imag[currWrite]);
             err |= clSetKernelArg(kernelInfo->kernel, 4, sizeof(cl_int), &dir);
             err |= clSetKernelArg(kernelInfo->kernel, 5, sizeof(cl_int), &s);
+            err |= clSetKernelArg(kernelInfo->kernel, 6, sizeof(cl_mem), &(plan->sin_LUT_d1));
+            err |= clSetKernelArg(kernelInfo->kernel, 7, sizeof(cl_mem), &(plan->cos_LUT_d1));
+            err |= clSetKernelArg(kernelInfo->kernel, 8, sizeof(cl_mem), &(plan->sin_LUT_d2));
+            err |= clSetKernelArg(kernelInfo->kernel, 9, sizeof(cl_mem), &(plan->cos_LUT_d2));
+            
+            
 
             err |= clEnqueueNDRangeKernel(queue,  kernelInfo->kernel, 1, NULL, &gWorkItems, &lWorkItems, 0, NULL, NULL);
             if(err)
@@ -309,6 +324,10 @@ clFFT_ExecutePlannar( cl_command_queue queue, clFFT_Plan Plan, cl_int batchSize,
             err |= clSetKernelArg(kernelInfo->kernel, 3, sizeof(cl_mem), &memObj_imag[currWrite]);
             err |= clSetKernelArg(kernelInfo->kernel, 4, sizeof(cl_int), &dir);
             err |= clSetKernelArg(kernelInfo->kernel, 5, sizeof(cl_int), &s);
+            err |= clSetKernelArg(kernelInfo->kernel, 6, sizeof(cl_mem), &(plan->sin_LUT_d1));
+            err |= clSetKernelArg(kernelInfo->kernel, 7, sizeof(cl_mem), &(plan->cos_LUT_d1));
+            err |= clSetKernelArg(kernelInfo->kernel, 8, sizeof(cl_mem), &(plan->sin_LUT_d2));
+            err |= clSetKernelArg(kernelInfo->kernel, 9, sizeof(cl_mem), &(plan->cos_LUT_d2));
 
             err |= clEnqueueNDRangeKernel(queue,  kernelInfo->kernel, 1, NULL, &gWorkItems, &lWorkItems, 0, NULL, NULL);
             if(err)

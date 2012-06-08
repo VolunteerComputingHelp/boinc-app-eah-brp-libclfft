@@ -55,6 +55,7 @@
 #include <iostream>
 #include <string>
 #include <sstream>
+#include <cmath>
 #include <limits.h>
 
 using namespace std;
@@ -160,6 +161,27 @@ destroy_plan(cl_fft_plan *Plan)
         clReleaseMemObject(Plan->tempmemobj_imag);
         Plan->tempmemobj_imag = NULL;
     }
+
+    if(Plan->sin_LUT_d1)
+       {
+        clReleaseMemObject(Plan->sin_LUT_d1);
+    }
+
+    if(Plan->sin_LUT_d2)
+       {
+        clReleaseMemObject(Plan->sin_LUT_d2);
+    }
+
+    if(Plan->cos_LUT_d1)
+       {
+        clReleaseMemObject(Plan->cos_LUT_d1);
+    }
+
+    if(Plan->cos_LUT_d2)
+       {
+        clReleaseMemObject(Plan->cos_LUT_d2);
+    }
+
 }
 
 static int
@@ -228,6 +250,146 @@ int getMaxKernelWorkGroupSize(cl_fft_plan *plan, unsigned int *max_wg_size, unsi
                          } \
                        }
 
+static
+int precomputeSinCosLUTs(cl_fft_plan * plan,cl_int *error_code) {
+
+    size_t i=0;
+    cl_int err;
+	
+    float * tmpLUT;
+
+    // find logN1,logN2, where 
+    // n = 2^logN1 * 2^logN2 , and logN1=logN2 +/- 1
+  
+    size_t N=plan->n.x*plan->n.y*plan->n.z;
+
+    plan->logN1=0;
+    plan->logN2=0;
+
+    size_t Nrem=N;
+    
+    while(Nrem > 1) {
+        plan->logN1++;
+        Nrem >>= 1;
+
+        if(Nrem > 1) {
+            plan->logN2++;
+            Nrem >>= 1;
+        }
+    }		
+
+    plan->N1 = 1 << plan->logN1;
+
+    plan->N2 = 1 << plan->logN2;
+
+    // we use logN1 >= logN2 to allocate a buffer that fits 
+    // the greater of the two LUTs 
+    tmpLUT = (float*) malloc( plan->N1 * sizeof(float));
+
+    float * tmpLUT_sin1 = (float*) malloc( plan->N1 * sizeof(float));
+    float * tmpLUT_sin2 = (float*) malloc( plan->N1 * sizeof(float));
+    float * tmpLUT_cos1 = (float*) malloc( plan->N1 * sizeof(float));
+    float * tmpLUT_cos2 = (float*) malloc( plan->N1 * sizeof(float));
+
+
+/*
+    if(tmpLUT==NULL) {
+	// TODO: error handling
+    }	
+*/
+    double PI2 = 8.0*atan(1.0);
+	
+    for(i=0; i < plan->N1; i++) {
+        tmpLUT_sin1[i]=(float)sin(PI2 * (float) i / (float)N); 
+    } 
+    plan->sin_LUT_d1 = clCreateBuffer(plan->context,CL_MEM_READ_ONLY | CL_MEM_COPY_HOST_PTR, plan->N1*sizeof(float),tmpLUT_sin1, &err);
+
+    if( err != CL_SUCCESS) 
+    { 
+        if(error_code) 
+            *error_code = err; 
+        free(tmpLUT);
+        return 1;
+    } 
+
+    
+    for(i=0; i < plan->N1; i++) {
+        tmpLUT_cos1[i]=(float)cos(PI2 * (float) i / (float)N);
+    }
+    plan->cos_LUT_d1 = clCreateBuffer(plan->context,CL_MEM_READ_ONLY | CL_MEM_COPY_HOST_PTR, plan->N1*sizeof(float),tmpLUT_cos1, &err);
+    if( err != CL_SUCCESS) 
+    { 
+        if(error_code) 
+            *error_code = err; 
+        free(tmpLUT);
+        return 1;
+    } 
+    
+    for(i=0; i < plan->N2; i++) {
+        tmpLUT_sin2[i]=(float)sin(PI2 * (float) i / (float) plan->N2);
+    }
+    plan->sin_LUT_d2 = clCreateBuffer(plan->context,CL_MEM_READ_ONLY | CL_MEM_COPY_HOST_PTR, plan->N2*sizeof(float),tmpLUT_sin2, &err);
+    if( err != CL_SUCCESS) 
+    { 
+        if(error_code) 
+            *error_code = err; 
+        free(tmpLUT);
+        return 1;
+    } 
+    
+    for(i=0; i < plan->N2; i++) {
+        tmpLUT_cos2[i]=(float)cos(PI2 * (float) i / (float) plan->N2);
+    }
+    plan->cos_LUT_d2 = clCreateBuffer(plan->context,CL_MEM_READ_ONLY | CL_MEM_COPY_HOST_PTR, plan->N2*sizeof(float),tmpLUT_cos2, &err);
+    if( err != CL_SUCCESS) 
+    { 
+        if(error_code) 
+            *error_code = err; 
+        free(tmpLUT);
+        return 1;
+    } 
+
+
+
+    float diff=0.0f;
+
+    for(int i = 0 ; i < N ; i++) {
+        int ind1 = i & (plan->N1-1);
+        int ind2 = i >> plan->logN1;
+
+        float cos_ref = cos(-PI2 * (float) i / (float) N);
+        float sin_ref = sin(-PI2 * (float) i / (float) N);
+
+        float test_sin =-1.0*(tmpLUT_sin1[ind1]*tmpLUT_cos2[ind2]+tmpLUT_cos1[ind1] * tmpLUT_sin2[ind2]);
+        float test_cos = tmpLUT_cos1[ind1]*tmpLUT_cos2[ind2]-tmpLUT_sin1[ind1] * tmpLUT_sin2[ind2];
+     	
+        float test_diff= std::abs(test_sin - sin_ref);
+        if(test_diff > diff ) diff=test_diff;
+        test_diff= std::abs(test_cos - cos_ref);
+        if(test_diff > diff ) diff=test_diff;
+
+ 
+
+    }	
+    fprintf(stdout,"!!!!!!!!! %e !!!!!!!!!!!!\n",diff);
+    
+
+    free(tmpLUT);
+
+    free(tmpLUT_sin1);
+    free(tmpLUT_sin2);
+    free(tmpLUT_cos1);
+    free(tmpLUT_cos2);
+
+
+
+
+
+    return 0;
+}
+
+
+
 clFFT_Plan
 clFFT_CreatePlan(cl_context context, clFFT_Dim3 n, clFFT_Dimension dim, clFFT_DataFormat dataFormat, cl_int *error_code )
 {
@@ -273,12 +435,18 @@ clFFT_CreatePlan(cl_context context, clFFT_Dim3 n, clFFT_Dimension dim, clFFT_Da
     plan->tempmemobj = 0;
     plan->tempmemobj_real = 0;
     plan->tempmemobj_imag = 0;
+    plan->sin_LUT_d1=0;
+    plan->sin_LUT_d2=0;
+    plan->cos_LUT_d1=0;
+    plan->cos_LUT_d2=0;
     plan->max_localmem_fft_size = 2048;
     plan->max_work_item_per_workgroup = 256;
     plan->max_radix = 16;
     plan->min_mem_coalesce_width = 16;
     plan->num_local_mem_banks = 16;
 
+    precomputeSinCosLUTs(plan,error_code);
+    
 patch_kernel_source:
 
     plan->kernel_string = new string("");
