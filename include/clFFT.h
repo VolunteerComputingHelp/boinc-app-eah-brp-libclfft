@@ -84,6 +84,14 @@ typedef enum
     clFFT_InterleavedComplexFormat = 1
 }clFFT_DataFormat;
 
+typedef enum 
+{
+  clFFT_native_trig       = 0,
+  clFFT_sincosfunc        = 1,
+  clFFT_BigLUT            = 2,
+  clFFT_TaylorLUT         = 3             
+} clFFT_TwiddleFactorMethod;
+
 typedef struct
 {
     unsigned int x;

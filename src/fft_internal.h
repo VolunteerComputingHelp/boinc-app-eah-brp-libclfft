@@ -138,12 +138,13 @@ typedef struct
     // precomputed lookup tables for sin,cos calculations, each of size 
     // sqrt(n) or 2*sqrt(n), n is size of signal;
  	
-    cl_mem                  sin_LUT_d1,sin_LUT_d2;
-    cl_mem                  cos_LUT_d1,cos_LUT_d2;
+    cl_mem                  cossin_LUT_d1;
+    cl_mem                  cossin_LUT_d2;
     int                     logN1;
     int                     logN2;
     size_t                  N1; 
     size_t                  N2;
+    clFFT_TwiddleFactorMethod twiddleMethod;
     
     // Maximum size of signal for which local memory transposed based
     // fft is sufficient i.e. no global mem transpose (communication)
