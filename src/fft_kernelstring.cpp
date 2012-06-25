@@ -749,6 +749,38 @@ insertLocalStoreIndexArithmatic(string &kernelString, int numWorkItemsReq, int n
 
 
 static void
+insertLocalSinCosLUT(string & kernel_string, cl_fft_plan *plan, int workgroupsize) {
+    
+    // conditionally copy to local (shared) memory 
+    
+    if(plan->twiddleMethod == clFFT_TaylorLUT) {
+        // LUT holds grid values for Taylor seres approx
+        kernel_string += string(" __local  float2  cossin_T_LUT[256];\n");
+        
+        int m = (int) ceilf(256.0 / (float) workgroupsize);
+        
+        
+        kernel_string += string(" int lLUTind= lId;       \n");     
+        
+        if (256 % workgroupsize != 0) kernel_string += string(" if(lLUTind < 256) {     \n");
+        kernel_string += string("     cossin_T_LUT[lLUTind]=cossinLUT2[lLUTind]; \n");
+        if (256 % workgroupsize  != 0)  kernel_string += string(" }                                      \n");
+        
+        for(int k= 1 ; k < m ; k++) {
+            kernel_string += string(" lLUTind+=") + num2str(workgroupsize) + string(";\n");
+            if (256 % workgroupsize != 0) kernel_string += string(" if(lLUTind < 256) { \n");
+            kernel_string += string("     cossin_T_LUT[lLUTind]=cossinLUT2[lLUTind]; \n");
+            if (256 % workgroupsize != 0) kernel_string += string(" }\n");
+        }
+        
+        kernel_string += string(" barrier(CLK_LOCAL_MEM_FENCE);\n");
+        
+// TODO remove        kernel_string += string(" __global float2 * cossin_T_LUT =  cossinLUT2;\n");
+    }
+}
+
+
+static void
 createLocalMemfftKernelString(cl_fft_plan *plan)
 {
     unsigned int radixArray[10];
@@ -818,6 +850,7 @@ createLocalMemfftKernelString(cl_fft_plan *plan)
     unsigned int lMemSize = 0;
 
     insertVariables(localString, maxRadix);
+    insertLocalSinCosLUT(localString, plan, numWorkItemsPerWG);
 
     lMemSize = insertGlobalLoadsAndTranspose(localString, n, numWorkItemsPerXForm, numXFormsPerWG, maxRadix, plan->min_mem_coalesce_width, dataFormat);
     (*kInfo)->lmem_size = (lMemSize > (*kInfo)->lmem_size) ? lMemSize : (*kInfo)->lmem_size;
@@ -1140,16 +1173,7 @@ insertSinCos(string & kernel_string, cl_fft_plan *plan, int num, int denom , str
 }
 
 
-static void
-insertLocalSinCosLUT(string & kernel_string, cl_fft_plan *plan, int workgroupsize) {
-    
-    // TODO: conditionally copy to local (shared memory) 
-    
-    if(plan->twiddleMethod == clFFT_TaylorLUT) {
-        // second LUT holds grid values for Taylor seres approx
-        kernel_string += string(" __global float2 * cossin_T_LUT =  cossinLUT2;\n");
-    }
-}
+
 
 static void
 createGlobalFFTKernelString(cl_fft_plan *plan, int n, int BS, cl_fft_kernel_dir dir, int vertBS)
@@ -1187,7 +1211,7 @@ createGlobalFFTKernelString(cl_fft_plan *plan, int n, int BS, cl_fft_kernel_dir 
     int Rinit = vertical ? BS : 1;
     batchSize = vertical ? min(BS, batchSize) : batchSize;
     int passNum;
-
+    
     for(passNum = 0; passNum < numPasses; passNum++)
     {
 
@@ -1255,7 +1279,10 @@ createGlobalFFTKernelString(cl_fft_plan *plan, int n, int BS, cl_fft_kernel_dir 
         strcpy((*kInfo)->kernel_name, kernelName.c_str());
 
         insertVariables(localString, R1);
-
+        
+        if((R2 > 1) || (passNum < (numPasses - 1))) {
+            insertLocalSinCosLUT(localString, plan, threadsPerBlock);
+        }    
         if(vertical)
         {
             localString += string("xNum = groupId >> ") + num2str((int)log2(numBlocksPerXForm)) + string(";\n");
@@ -1310,7 +1337,7 @@ createGlobalFFTKernelString(cl_fft_plan *plan, int n, int BS, cl_fft_kernel_dir 
                 localString += string("a[") + num2str(j) + string("] = in[") + num2str(j*gInInc*strideI) + string("];\n");
         }
 
-        insertLocalSinCosLUT(localString, plan, threadsPerBlock);
+
         
         localString += string("fftKernel") + num2str(R1) + string("(a, dir);\n");
 
@@ -1322,7 +1349,7 @@ createGlobalFFTKernelString(cl_fft_plan *plan, int n, int BS, cl_fft_kernel_dir 
 
             for(k = 1; k < R1; k++)
             {
-                insertSinCos(localString,plan, k, radix , expr, resVar);              
+                insertSinCos(localString,plan, k, radix , expr, resVar); 
 //                localString += string("ang = dir*(2.0f*M_PI*") + num2str(k) + string("/") + num2str(radix) + string(")*j;\n");
 //                localString += string("w = (float2)(native_cos(ang), native_sin(ang));\n");
                 localString += string("a[") + num2str(k) + string("] = complexMul(a[") + num2str(k) + string("], w);\n");
@@ -1367,7 +1394,6 @@ createGlobalFFTKernelString(cl_fft_plan *plan, int n, int BS, cl_fft_kernel_dir 
                 string expr = string("l * (k + ") + num2str((t%R2)*R1 + (t/R2)) + string(")");
                 
                 insertSinCos(localString, plan, 1, N , expr, varRes) ;
-                
                 
 //                localString += string("ang = ang1*(k + ") + num2str((t%R2)*R1 + (t/R2)) + string(");\n");
 //                localString += string("w = (float2)(native_cos(ang), native_sin(ang));\n");
