@@ -334,9 +334,15 @@ int precomputeSinCosLUTs(cl_fft_plan * plan,cl_int *error_code) {
 }
 
 
-
 clFFT_Plan
-clFFT_CreatePlan(cl_context context, clFFT_Dim3 n, clFFT_Dimension dim, clFFT_DataFormat dataFormat, cl_int *error_code )
+clFFT_CreatePlan(cl_context context, clFFT_Dim3 n, clFFT_Dimension dim, clFFT_DataFormat dataFormat, cl_int *error_code ) {
+    return clFFT_CreatePlanAdv( context,n, dim, dataFormat, 0,error_code );
+}
+
+
+
+clFFT_Plan 
+clFFT_CreatePlanAdv( cl_context context, clFFT_Dim3 n, clFFT_Dimension dim, clFFT_DataFormat dataFormat, unsigned long flags, cl_int *error_code )
 {
     int i;
     cl_int err;
@@ -388,9 +394,7 @@ clFFT_CreatePlan(cl_context context, clFFT_Dim3 n, clFFT_Dimension dim, clFFT_Da
     plan->min_mem_coalesce_width = 16;
     plan->num_local_mem_banks = 16;
 
-    
-    //TODO: restore native as default
-    plan->twiddleMethod = clFFT_TaylorLUT;    
+    plan->twiddleMethod = (clFFT_TwiddleFactorMethod)(flags & 7);    
     
     precomputeSinCosLUTs(plan,error_code);
 

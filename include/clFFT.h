@@ -89,7 +89,11 @@ typedef enum
   clFFT_native_trig       = 0,
   clFFT_sincosfunc        = 1,
   clFFT_BigLUT            = 2,
-  clFFT_TaylorLUT         = 3             
+  clFFT_TaylorLUT         = 3,
+  clFFT_RFU4              = 4,
+  clFFT_RFU5              = 5,   
+  clFFT_RFU6              = 6,  
+  clFFT_RFU7              = 7    
 } clFFT_TwiddleFactorMethod;
 
 typedef struct
@@ -114,6 +118,8 @@ typedef struct
 typedef void* clFFT_Plan;
 
 clFFT_Plan clFFT_CreatePlan( cl_context context, clFFT_Dim3 n, clFFT_Dimension dim, clFFT_DataFormat dataFormat, cl_int *error_code );
+
+clFFT_Plan clFFT_CreatePlanAdv( cl_context context, clFFT_Dim3 n, clFFT_Dimension dim, clFFT_DataFormat dataFormat, unsigned long flags, cl_int *error_code );
 
 void clFFT_DestroyPlan( clFFT_Plan plan );
 

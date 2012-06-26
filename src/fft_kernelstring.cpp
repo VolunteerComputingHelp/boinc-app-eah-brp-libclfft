@@ -757,25 +757,25 @@ insertLocalSinCosLUT(string & kernel_string, cl_fft_plan *plan, int workgroupsiz
         // LUT holds grid values for Taylor seres approx
         kernel_string += string(" __local  float2  cossin_T_LUT[256];\n");
         
-        int m = (int) ceilf(256.0 / (float) workgroupsize);
+        int sizeLUT= plan->N2;
+        
+        int m = (int) ceilf((float) sizeLUT / (float) workgroupsize);
         
         
         kernel_string += string(" int lLUTind= lId;       \n");     
         
-        if (256 % workgroupsize != 0) kernel_string += string(" if(lLUTind < 256) {     \n");
+        if (sizeLUT % workgroupsize != 0) kernel_string += string(" if(lLUTind < ") + num2str(sizeLUT) + string("){ \n");
         kernel_string += string("     cossin_T_LUT[lLUTind]=cossinLUT2[lLUTind]; \n");
-        if (256 % workgroupsize  != 0)  kernel_string += string(" }                                      \n");
+        if (sizeLUT % workgroupsize  != 0)  kernel_string += string(" }\n");
         
         for(int k= 1 ; k < m ; k++) {
             kernel_string += string(" lLUTind+=") + num2str(workgroupsize) + string(";\n");
-            if (256 % workgroupsize != 0) kernel_string += string(" if(lLUTind < 256) { \n");
+            if (sizeLUT % workgroupsize != 0) kernel_string += string(" if(lLUTind < ") + num2str(sizeLUT) + string("){ \n");
             kernel_string += string("     cossin_T_LUT[lLUTind]=cossinLUT2[lLUTind]; \n");
-            if (256 % workgroupsize != 0) kernel_string += string(" }\n");
+            if (sizeLUT % workgroupsize != 0) kernel_string += string(" }\n");
         }
         
         kernel_string += string(" barrier(CLK_LOCAL_MEM_FENCE);\n");
-        
-// TODO remove        kernel_string += string(" __global float2 * cossin_T_LUT =  cossinLUT2;\n");
     }
 }
 
