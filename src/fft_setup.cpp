@@ -424,7 +424,7 @@ patch_kernel_source:
         if(device_type == CL_DEVICE_TYPE_GPU)
         {
             gpu_found = 1;
-            err = clBuildProgram(plan->program, 1, &devices[i], "-cl-mad-enable", NULL, NULL);
+            err = clBuildProgram(plan->program, 1, &devices[i], "-cl-mad-enable -cl-single-precision-constant", NULL, NULL);
             if (err != CL_SUCCESS)
             {
                 char *build_log;
