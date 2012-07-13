@@ -1120,7 +1120,7 @@ insertSinCosCalcTaylor3(string & kernel_string, cl_fft_plan *plan, int num, int 
               logDenom++;
           }
           
-          kernel_string += string(" int k = (ang_index << ") + num2str(plan->logN2) + string(" + ") + num2str(denom / 2) + string(") >> ") + num2str(logDenom) + string(";\n");    
+          kernel_string += string(" int k = (ang_index +  ") + num2str( 1 <<(logDenom - plan->logN2 -1) ) + string(") >> ") + num2str(logDenom - plan->logN2) +string( ";\n");    
           
 	      // get cos/sin of grid point from LUT                                                                                                                                                                            
 
