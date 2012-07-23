@@ -1,4 +1,18 @@
-
+/***************************************************************************
+ *   Copyright (C) 2012 by Oliver Bock,Heinz-Bernd Eggenstein              *
+ *   oliver.bock[AT]aei.mpg.de                                             *
+ *   heinz-bernd.eggenstein[AT]aei.mpg.de                                  *
+ *                                                                         *
+ *   This file is part of libclfft (originally for Einstein@Home)          *
+ *   Derived from clFFT,  (C) Apple, see notice below.                     *
+ *                                                                         *
+ *                                                                         *
+ *   libclfft  is distributed in the hope that it will be useful,          *
+ *   but WITHOUT ANY WARRANTY; without even the implied warranty of        *
+ *   MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See              *
+ *   notice below for more details.                                        *
+ *                                                                         *
+ ***************************************************************************/
 //
 // File:       fft_kernelstring.cpp
 //
