@@ -1,6 +1,7 @@
 PWD = $(shell pwd)
 NVIDIA_SDK_INSTALL_PATH ?= /usr/local/cuda
 AMDAPPSDKROOT ?= /opt/AMDAPP
+CXX ?= g++
 
 TARGET = clfft_example
 
@@ -22,7 +23,7 @@ endif
 
 
 $(TARGET): main.cpp Makefile $(PWD)/../lib/libclfft.a
-	g++ $(CXXFLAGS) main.cpp $(LDFLAGS) -o $(TARGET)
+	$(CXX) $(CXXFLAGS) main.cpp $(LDFLAGS) -o $(TARGET)
 
 clean:
 	rm -f $(TARGET)

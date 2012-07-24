@@ -1,6 +1,7 @@
 PWD = $(shell pwd)
 NVIDIA_SDK_INSTALL_PATH ?= /usr/local/cuda
 AMDAPPSDKROOT ?= /opt/AMDAPP
+CXX ?= i586-mingw32msvc-g++
 
 TARGET = clfft_example.exe
 
@@ -8,7 +9,7 @@ CXXFLAGS += -O3 -Wall -g -I$(NVIDIA_SDK_INSTALL_PATH)/OpenCL/common/inc -I$(AMDA
 LDFLAGS += $(PWD)/../lib/libclfft.a ../lib/amd/win32/2.5/OpenCL.lib
 
 $(TARGET): main.cpp Makefile $(PWD)/../lib/libclfft.a
-	i586-mingw32msvc-g++ $(CXXFLAGS) main.cpp $(LDFLAGS) -o $(TARGET)
+	$(CXX) $(CXXFLAGS) main.cpp $(LDFLAGS) -o $(TARGET)
 
 clean:
 	rm -f $(TARGET)
