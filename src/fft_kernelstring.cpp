@@ -984,6 +984,12 @@ getGlobalRadixInfo(int n, int *radix, int *R1, int *R2, int *numRadices)
 static void 
 insertSinCosCalcDirectNative(string & kernel_string, cl_fft_plan *plan, int num, int denom , string & expr, string & varRes) 
 {
+#if defined(__STDC_VERSION__) && __STDC_VERSION__ >= 199901L
+    const char format[] = "%a"; 
+#else
+    const char format[] = "%f";
+#endif
+
     if(denom & (denom-1)) {
         kernel_string += string("ang = dir*(2.0f*M_PI*") + num2str(num) + string("/") + num2str(denom) + string(")*("+expr+");\n");        
     } else {
@@ -1006,7 +1012,7 @@ insertSinCosCalcDirectNative(string & kernel_string, cl_fft_plan *plan, int num,
             default:     
                 float pi2=0x1.921fb54442d18p+2;
                 char tw[200];
-                sprintf(tw,"%a",pi2*num / (float) denom);
+                sprintf(tw,format,pi2*num / (float) denom);
                 kernel_string += string("ang = dir*(" + string(tw) + string(") * (")+expr+");\n"); 
                 break;
         }
@@ -1017,6 +1023,12 @@ insertSinCosCalcDirectNative(string & kernel_string, cl_fft_plan *plan, int num,
 static void
 insertSinCosCalcDirect(string & kernel_string, cl_fft_plan *plan, int num, int denom , string & expr, string & varRes)
 {
+#if defined(__STDC_VERSION__) && __STDC_VERSION__ >= 199901L
+    const char format[] = "%a";
+#else
+    const char format[] = "%f";
+#endif
+
   if(denom & (denom-1)) {
     kernel_string += string("ang = dir*(2.0f*M_PI*") + num2str(num) + string("/") + num2str(denom) + string(")*("+expr+");\n");
   } else {
@@ -1039,7 +1051,7 @@ insertSinCosCalcDirect(string & kernel_string, cl_fft_plan *plan, int num, int d
     default:
       float pi2=0x1.921fb54442d18p+2;
       char tw[200];
-      sprintf(tw,"%a",pi2*num / (float) denom);
+      sprintf(tw,format,pi2*num / (float) denom);
       kernel_string += string("ang = dir*(" + string(tw) + string(") * (")+expr+");\n");
       break;
     }
@@ -1094,6 +1106,14 @@ insertSinCosCalc(string & kernel_string, cl_fft_plan *plan, int num, int denom ,
 static void
 insertSinCosCalcTaylor3(string & kernel_string, cl_fft_plan *plan, int num, int denom , string & expr, string & varRes)
 {
+
+#if defined(__STDC_VERSION__) && __STDC_VERSION__ >= 199901L
+    const char format[] = "%a";
+#else
+    const char format[] = "%f";
+#endif
+
+
   if(denom & (denom-1)) {
     kernel_string += string("ang = dir*(2.0f*M_PI*") + num2str(num) + string("/") + num2str(denom) + string(")*("+expr+");\n");
     kernel_string += varRes+string(" = (float2)(native_cos(ang), native_sin(ang));\n");
@@ -1112,7 +1132,7 @@ insertSinCosCalcTaylor3(string & kernel_string, cl_fft_plan *plan, int num, int 
         num >>=1;
       }
       // if normalized denom < grid size, pick directly from LUT. 
-      if(denom <= plan->N2) {
+      if((size_t) denom <= plan->N2) {
           kernel_string += string("{ int ang_index = (") + num2str(num) + string(" * ( ") + expr + string(")) & ") + num2str(denom -1)   + string("; \n");
           kernel_string += string("  int k = ang_index * ") + num2str(plan->N2 / denom ) + string(";\n");
           kernel_string += string("  float2 cs =cossin_T_LUT[k];\n");                     
@@ -1148,7 +1168,7 @@ insertSinCosCalcTaylor3(string & kernel_string, cl_fft_plan *plan, int num, int 
           // precompute h0=2*pi/denom;
           float pi2=0x1.921fb54442d18p+2;
           char tw[200];
-          sprintf(tw,"%A",-pi2/(float) denom);
+          sprintf(tw,format,-pi2/(float) denom);
           kernel_string += string("  float mh=") +string(tw)+string("*(float)r;\n"); 
 
           // compute taylor series terms to order 3 and add them up, in "reverse" order (highest order first)
