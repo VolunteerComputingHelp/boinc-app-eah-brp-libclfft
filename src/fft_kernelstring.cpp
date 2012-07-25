@@ -987,7 +987,7 @@ insertSinCosCalcDirectNative(string & kernel_string, cl_fft_plan *plan, int num,
 #if defined(__STDC_VERSION__) && __STDC_VERSION__ >= 199901L
     const char format[] = "%a"; 
 #else
-    const char format[] = "%f";
+    const char format[] = "%.10e";
 #endif
 
     if(denom & (denom-1)) {
@@ -1026,7 +1026,7 @@ insertSinCosCalcDirect(string & kernel_string, cl_fft_plan *plan, int num, int d
 #if defined(__STDC_VERSION__) && __STDC_VERSION__ >= 199901L
     const char format[] = "%a";
 #else
-    const char format[] = "%f";
+    const char format[] = "%.10e";
 #endif
 
   if(denom & (denom-1)) {
@@ -1110,7 +1110,7 @@ insertSinCosCalcTaylor3(string & kernel_string, cl_fft_plan *plan, int num, int 
 #if defined(__STDC_VERSION__) && __STDC_VERSION__ >= 199901L
     const char format[] = "%a";
 #else
-    const char format[] = "%f";
+    const char format[] = "%.10e";
 #endif
 
 
