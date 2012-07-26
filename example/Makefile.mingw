@@ -7,7 +7,7 @@ ARCH ?= 32
 TARGET = clfft_example.exe
 
 CXXFLAGS += -O3 -Wall -g -I$(NVIDIA_SDK_INSTALL_PATH)/OpenCL/common/inc -I$(AMDAPPSDKROOT)/include -I../include -D_WIN32_WINDOWS=0x0410 -malign-double
-LDFLAGS += $(PWD)/../lib/libclfft.a -lOpenCL -L../lib/amd/win$(ARCH)/2.6
+LDFLAGS += -static-libgcc -static-libstdc++ $(PWD)/../lib/libclfft.a -lOpenCL -L../lib/amd/win$(ARCH)/2.6
 
 $(TARGET): main.cpp Makefile $(PWD)/../lib/libclfft.a
 	$(CXX) $(CXXFLAGS) main.cpp $(LDFLAGS) -o $(TARGET)
