@@ -1,6 +1,6 @@
 # patterns
 *.o
-*.a
+libclfft.a
 
 # files
 clfft_example
