@@ -98,6 +98,25 @@ typedef enum
     clFFT_InterleavedComplexFormat = 1
 }clFFT_DataFormat;
 
+// enum for twiddle factor method selection (essentially different methods to evaluate 
+// sin(x) and cos(x) on a grid x_k= 2*pi*k/N for some N, k=0..N-1 )
+//
+// clFFT_native_trig    : the original method, using native_sin, native_cos
+//                      : NOTE: precision is hardware dependent, see OpenCL 1.1 spec
+// clFFT_sincosfunc     : alternative method using sincos function (slow in most 
+//                      : implementations, accuracy as defined in OpenCL 1.1 spec
+// clFFT_BigLUT         : alternative version using Lookup tables stored as part of the 
+//                      : plan. The LUTs size grow with O(sqrt(N)) , where N is the 
+//                      : total size of the transform (over all dimensions). This should 
+//                      : be the most accurate option and have much better performance than 
+//                      : with option clFFT_sincosfunc
+// clFFT_TaylorLUT      : alternative method using a constant size Look-Up-Table and Taylor
+//                      : series approx of sin,cos 
+// clFFT_RFU{n}         : reserved for future use, so that clFFT_TwiddleFactorMethod may use
+//                      : the lower 3 bits of the flags argument to clFFT_CreatePlanAdv. 
+//                      : All options are mutually exclusive. 
+     
+
 typedef enum 
 {
   clFFT_native_trig       = 0,
@@ -132,6 +151,27 @@ typedef struct
 typedef void* clFFT_Plan;
 
 clFFT_Plan clFFT_CreatePlan( cl_context context, clFFT_Dim3 n, clFFT_Dimension dim, clFFT_DataFormat dataFormat, cl_int *error_code );
+
+/**
+ *  Extended plan constructor, allows to specify plan options in the flags parameter.  
+ *  Currently only values of the enumeration clFFT_TwiddleFactorMethod are supported to 
+ *  choose the method for twiddle factor computations. 
+ *
+ *  Param:
+ *        context   : cl_context to use
+ *        n         : transform lengths in (up to) 3 dimensions
+ *        dim       : dimension of the transform
+ *        dataFormat: see  clFFT_DataFormat type
+ *        flags     : plan generation options. Use OR to specify more than one option 
+ *                    (currently only the mutually exclusive enumeration values of 
+ *                    clFFT_TwiddleFactorMethod are supported) 
+ *        error_code: pointer to error code, in case of error
+ *
+ *  Returns:
+ *        freshly allocated clFFT_Plan object holding the plan for the specified transform.
+ *        Can be reused for several FFT plan executions. 
+ *        The caller is responsible to deallocate this object after use.   
+ */
 
 clFFT_Plan clFFT_CreatePlanAdv( cl_context context, clFFT_Dim3 n, clFFT_Dimension dim, clFFT_DataFormat dataFormat, unsigned long flags, cl_int *error_code );
 
