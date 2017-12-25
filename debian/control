@@ -1,0 +1,32 @@
+Source: libapple-opencl-fft
+Priority: optional
+Maintainer: Steffen Moeller <moeller@debian.org>
+Build-Depends: debhelper (>= 9)
+Standards-Version: 4.1.2
+Section: libs
+Vcs-git: https://github.com/VolunteerComputingHelp/boinc-app-eah-brp-libclfft/
+Vcs-Browser: https://github.com/VolunteerComputingHelp/boinc-app-eah-brp-libclfft/
+#Vcs-git: origin	https://gitlab.aei.uni-hannover.de/einsteinathome/libclfft (fetch)
+#Vcs-Browser: http://anonscm.debian.org/?p=collab-maint/libapple-opencl-fft.git;a=summary
+#Vcs-Git: git://anonscm.debian.org/collab-maint/libapple-opencl-fft.git
+#Vcs-Browser: http://anonscm.debian.org/?p=collab-maint/libapple-opencl-fft.git;a=summary
+
+#Package: libapple-opencl-fft-dev
+Package: boinc-app-eah-brp-clfft-dev
+Section: libdevel
+Architecture: any
+Conflicts: libclfft-dev
+Depends: boinc-app-eah-brp-clfft1 (= ${binary:Version}), ${misc:Depends}
+Description: Development files for EAH's flavour of Apple's OpenCL FFT library
+ Header files and a static library.
+
+#Package: libapple-opencl-fft0
+Package: boinc-app-eah-brp-clfft1
+Architecture: any
+Depends: ${shlibs:Depends}, ${misc:Depends}
+Description: Eintein@Home's flavour of Apple's OpenCL FFT implementation
+ This package is still experimental. Do not depend on it.
+ .
+ Found on
+ .
+  https://gitlab.aei.uni-hannover.de/einsteinathome/libclfft

@@ -1,0 +1,5 @@
+libapple-opencl-fft (0.0.20121211-1) unstable; urgency=low
+
+  * This package is not officially released.
+
+ -- Steffen Moeller <moeller@debian.org>  Fri, 22 Dec 2017 14:34:48 +0100

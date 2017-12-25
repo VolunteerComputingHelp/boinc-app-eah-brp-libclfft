@@ -1,0 +1,41 @@
+Index: libclfft/src/Makefile
+===================================================================
+--- libclfft.orig/src/Makefile
++++ libclfft/src/Makefile
+@@ -3,9 +3,17 @@ AMDAPPSDKROOT ?= /opt/AMDAPP
+ CXX ?= g++
+ AR ?= ar
+ 
+-TARGET = libclfft.a
++LIBRARYNAME=libclfft
++LIBRARYSONAME=$(LIBRARYNAME).so.1
++TARGET = $(LIBRARYNAME).a $(LIBRARYSONAME).2012
++
++CXXFLAGS += -O3 -Wall -g 
++CXXFLAGS += -I$(NVIDIA_SDK_INSTALL_PATH)/OpenCL/common/inc -I$(AMDAPPSDKROOT)/include 
++CXXFLAGS += -I../include
++CXXFLAGS += -fPIC -fpic
++
++LDFLAGS += -lOpenCL
+ 
+-CXXFLAGS += -O3 -Wall -g -I$(NVIDIA_SDK_INSTALL_PATH)/OpenCL/common/inc -I$(AMDAPPSDKROOT)/include -I../include
+ OS = $(shell uname -s)
+ ifeq ($(OS), Darwin)
+ 	CXXFLAGS += -I/System/Library/Frameworks
+@@ -15,7 +23,9 @@ OBJECTS = fft_setup.o fft_execute.o fft_
+ 
+ 
+ $(TARGET): $(OBJECTS)
+-	$(AR) rcs $(TARGET) $(OBJECTS)
++	$(AR) rcs $(LIBRARYNAME).a $(OBJECTS)
++	ranlib $(LIBRARYNAME).a
++	$(CXX) -shared -o $(LIBRARYSONAME).2012 -Wl,-soname,$(LIBRARYSONAME) $(OBJECTS) $(LDFLAGS)
+ 	mkdir -p ../lib
+ 	cp $(TARGET) ../lib/
+ 
+@@ -30,4 +40,5 @@ fft_kernelstring.o: fft_kernelstring.cpp
+ 
+ clean:
+ 	rm -f *.o
++	rm -f *.so.*
+ 	rm -f *.a

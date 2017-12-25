@@ -1,0 +1,11 @@
+libapple-opencl-fft for Debian
+------------------------------
+
+This package provides a flavour of the Apple OpenCL example code
+implementing the Fast Fourier Transformation as used for the Einstein@Home
+projects.
+
+It will take another while, if ever, or this package to find its way to 
+the Debian project servers.
+
+ -- Steffen Moeller <moeller@debian.org>  Fri, 22 Dec 2017 14:34:48 +0100
